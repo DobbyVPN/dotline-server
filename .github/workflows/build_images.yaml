@@ -22,7 +22,7 @@ jobs:
         run: |
           git clone https://github.com/cbeuw/Cloak.git
           cd Cloak
-          CLOAK_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
+          CLOAK_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1)).${{ github.run_number }}
           echo "CLOAK_VERSION=$CLOAK_VERSION"
           echo "CLOAK_VERSION=$CLOAK_VERSION" >> $GITHUB_ENV
 
@@ -42,8 +42,13 @@ jobs:
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
           IMAGE_NAME="ghcr.io/$OWNER/$REPO/cloak-server"
-          TAG="$IMAGE_NAME:"${{ env.CLOAK_VERSION }}
-          docker build -f Dockerfile-cloak-server -t "$TAG.${{ github.run_number }}" -t "$IMAGE_NAME:latest" .
+          VERSION=${{ env.CLOAK_VERSION }}
+          IFS='.' read -r A B C D <<< "${VERSION#v}"
+          VA="v$A"
+          VB="v$A.$B"
+          VC="v$A.$B.$C"
+          VD="v$A.$B.$C.$D"
+          docker build -f Dockerfile-cloak-server -t "$IMAGE_NAME:$VA" -t "$IMAGE_NAME:$VB" -t "$IMAGE_NAME:$VC" -t "$IMAGE_NAME:$VD" -t "$IMAGE_NAME:latest" .
           docker push "$IMAGE_NAME" --all-tags
       
             
