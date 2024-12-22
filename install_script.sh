@@ -38,7 +38,7 @@ function generate_url {
 function run_ss {
     # Accepts 2 args: $1 - api-port, $2 - keys-port
     echo "Outline server runninng..."   
-    ./install_server.sh --api-port $1 --keys-port $2 
+    ./install_server.sh --hostname 127.0.0.1 --api-port $1 --keys-port $2 
 }
 
 function replace_caddy_holders {

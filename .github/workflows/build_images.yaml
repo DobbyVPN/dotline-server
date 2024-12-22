@@ -88,6 +88,12 @@ jobs:
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
           IMAGE_NAME="ghcr.io/$OWNER/$REPO/awg-server"
-          TAG="$IMAGE_NAME:"${{ env.AWG_VERSION }}
-          docker build -f Dockerfile -t "$TAG.${{ github.run_number }}" -t "$IMAGE_NAME:latest" .
+          VERSION=${{ env.AWG_VERSION }}
+          IFS='.' read -r A B C D <<< "${VERSION#v}"
+          VA="v$A"
+          VB="v$A.$B"
+          VC="v$A.$B.$C"
+          VD="v$A.$B.$C.$D"
+          docker build -f Dockerfile-cloak-server -t "$IMAGE_NAME:$VA" -t "$IMAGE_NAME:$VB" -t "$IMAGE_NAME:$VC" -t "$IMAGE_NAME:$VD" -t "$IMAGE_NAME:latest" .
           docker push "$IMAGE_NAME" --all-tags
+

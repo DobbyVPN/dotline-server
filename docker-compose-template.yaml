@@ -11,7 +11,7 @@ services:
 
 
   cloak-server:
-    image: ghcr.io/dobbyvpn/dobbyvpn-server/cloak-server:v2.10.0.3
+    image: ghcr.io/dobbyvpn/dobbyvpn-server/cloak-server:v2.10.0
     container_name: ck-server
     entrypoint: ["/app/data/cloak_start.sh"]  
     network_mode: "host"
@@ -41,6 +41,17 @@ services:
       - /opt/outline/persisted-state:/opt/outline/persisted-state
     restart: "always"
 
+      #  awg-server:
+      #    image: ghcr.io/dobbyvpn/dobbyvpn-server/awg-server:v0.2.12.21
+      #    container_name: awg-server
+      #    network_mode: "host"
+      #    entrypoint: ["/awg/awg-entrypoint.sh"]
+      #    volumes:
+      #      - ./awg-entrypoint.sh:/awg/awg-entrypoint.sh
+      #    labels:
+      #      com.centurylinklabs.watchtower.enable: "true"
+      #    restart: "always"
+
   watchtower:
     image: containrrr/watchtower
     container_name: watchtower
@@ -49,12 +60,12 @@ services:
       - caddy
       - cloak-server
       - shadowbox
+        #     - awg-server
     command:
       - "--cleanup"
       - "--label-enable"
-      - "--tlsverify"
       - "--interval"
-      - "3600"
+      - "30"
     labels:
       com.centurylinklabs.watchtower: "true"
     volumes:
