@@ -12,10 +12,10 @@ CLOAK_PUBLIC_KEY=$(echo $KEYPAIRS | cut -d" " -f5)
 USER_UID=$(/app/ck-server -uid | cut -d" " -f4)
 ADMIN_UID=$(/app/ck-server -uid | cut -d" " -f4)
 
-echo "CLOAK_PRIVATE_KEY => $CLOAK_PRIVATE_KEY" >> /app/data/creds.txt
-echo "CLOAK_PUBLIC_KEY => $CLOAK_PUBLIC_KEY" >> /app/data/creds.txt
-echo "USER_UID => $USER_UID" >> /app/data/creds.txt
-echo "ADMIN_UID => $ADMIN_UID" >> /app/data/creds.txt
+echo "CLOAK_PRIVATE_KEY=$CLOAK_PRIVATE_KEY" >> /app/data/creds.txt
+echo "CLOAK_PUBLIC_KEY=$CLOAK_PUBLIC_KEY" >> /app/data/creds.txt
+echo "USER_UID=$USER_UID" >> /app/data/creds.txt
+echo "ADMIN_UID=$ADMIN_UID" >> /app/data/creds.txt
 
 sed -i "s|<keys-port>|$KEYS_PORT|" "/app/data/cloak-server.conf"
 sed -i "s|<cloak-server-port>|$CLOAK_SERVER_PORT|" "/app/data/cloak-server.conf"

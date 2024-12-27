@@ -54,7 +54,7 @@ function save_credentials {
 
     echo "Saving credentials"
     for key in "${!array_creds[@]}"; do
-        echo "$key => ${array_creds[$key]}" >> "$pers_dir_name/$creds_filename"
+        echo "$key=${array_creds[$key]}" >> "$pers_dir_name/$creds_filename"
     done
 }
 
