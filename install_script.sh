@@ -34,10 +34,9 @@ function main {
     echo \"CLOAK_PRIVATE_KEY=\$CLOAK_PRIVATE_KEY\" >> /app/.env
     echo \"CLOAK_PUBLIC_KEY=\$CLOAK_PUBLIC_KEY\" >> /app/.env
     echo \"CLOAK_USER_UID=\$CLOAK_USER_UID\" >> /app/.env
-    echo \"ADMIN_UID=\$CLOAK_ADMIN_UID\" >> /app/.env
+    echo \"CLOAK_ADMIN_UID=\$CLOAK_ADMIN_UID\" >> /app/.env
     "
 
-    cat .env
     echo "OUTLINE_API_PORT=${OUTLINE_API_PORT}" >> ".env"
     echo "OUTLINE_KEYS_PORT=${OUTLINE_KEYS_PORT}" >> ".env"
     echo "OUTLINE_API_PREFIX=${OUTLINE_API_PREFIX}" >> ".env"
