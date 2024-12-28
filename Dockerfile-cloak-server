@@ -1,7 +1,7 @@
 FROM golang:alpine AS build
 
 WORKDIR /opt
-RUN apk add --no-cache git make gettext
+RUN apk add --no-cache git make
 
 RUN git clone https://github.com/cbeuw/Cloak.git
 
@@ -11,7 +11,7 @@ RUN make server
 FROM alpine:latest
 
 RUN apk upgrade --no-cache && \
-    apk add --no-cache tzdata && \
+    apk add --no-cache tzdata gettext && \
     rm -rf /var/cache/apk/*
 
 WORKDIR /app
