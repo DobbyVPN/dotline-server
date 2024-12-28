@@ -1,38 +1,60 @@
 version: '3.8'
 
+networks:
+  my_network:
+    driver: bridge
+
 services:
   caddy:
     image: caddy:2.8.4
     container_name: caddy
-    network_mode: "host"
+    networks:
+      - my_network
+    ports:
+      - 443:443/tcp
+    environment:
+      - DOMAIN_NAME=${DOMAIN_NAME}
+      - SPECIAL_URL=${SPECIAL_URL}
+      - CLOAK_SERVER_PORT=${CLOAK_SERVER_PORT}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile  
     restart: always
 
 
   cloak-server:
-    image: ghcr.io/dobbyvpn/dobbyvpn-server/cloak-server:v2.10.0
+    image: ghcr.io/dobbyvpn/dobbyvpn-server/cloak-server:v2
     container_name: ck-server
-    entrypoint: ["/app/data/cloak_start.sh"]  
-    network_mode: "host"
+    networks:
+      - my_network
+    environment:
+      - CLOAK_SERVER_PORT=${CLOAK_SERVER_PORT}
+      - DOMAIN_NAME=${DOMAIN_NAME}
+      - CLOAK_PRIVATE_KEY=${CLOAK_PRIVATE_KEY}
+      - CLOAK_USER_UID=${CLOAK_USER_UID}
+      - CLOAK_ADMIN_UID=${CLOAK_ADMIN_UID}
     labels:
       com.centurylinklabs.watchtower.enable: "true"
     volumes:
-      - /root/dobbyvpn-server/data/:/app/data/
+      - ./cloak-server.conf:/app/cloak-server-template.conf
+    entrypoint: |
+      sh -c "
+      envsubst < /app/cloak-server-template.conf > /app/cloak-server.conf &&
+      exec /app/ck-server -c /app/cloak-server.conf"
     restart: always
 
   shadowbox:
     image: quay.io/outline/shadowbox:stable
     container_name: shadowbox
-    network_mode: "bridge"
+    networks:
+      - my_network
     ports:
-      - 127.0.0.1:<outline-api-port>:<outline-api-port>
-      - 127.0.0.1:<outline-keys-port>:<outline-keys-port>
+      - 127.0.0.1:${OUTLINE_API_PORT}:${OUTLINE_API_PORT}
+      - 127.0.0.1:${OUTLINE_KEYS_PORT}:${OUTLINE_KEYS_PORT}
 
     environment:
       - SB_STATE_DIR=/opt/outline/persisted-state
-      - SB_API_PORT=<outline-api-port>
-      - SB_API_PREFIX=<outline-api-prefix>
+      - SB_API_PORT=${OUTLINE_API_PORT}
+      - SB_API_PREFIX=${OUTLINE_API_PREFIX}
       - SB_CERTIFICATE_FILE=/opt/outline/persisted-state/shadowbox-selfsigned.crt
       - SB_PRIVATE_KEY_FILE=/opt/outline/persisted-state/shadowbox-selfsigned.key
     labels:
@@ -42,26 +64,31 @@ services:
     restart: "always"
 
   awg-server:
-    image: ghcr.io/dobbyvpn/dobbyvpn-server/awg-server:v0.2.12.21
+    image: ghcr.io/dobbyvpn/dobbyvpn-server/awg-server:v0.2
     container_name: awg-server
     cap_add:
+      - SYS_MODULE
       - NET_ADMIN
-    network_mode: "host"
+    network_mode: "bridge"
+    ports:
+      - "51820:51820/udp"
     volumes:
-      - ./awg-entrypoint.sh:/awg/awg-entrypoint.sh
+      - /lib/modules:/lib/modules
+      - ${PWD}/awg:/etc/amnezia/amneziawg
     labels:
       com.centurylinklabs.watchtower.enable: "true"
+    privileged: true
     restart: "always"
 
   watchtower:
     image: containrrr/watchtower
     container_name: watchtower
-    network_mode: "host"
+    network_mode: "bridge"
     depends_on:
       - caddy
       - cloak-server
       - shadowbox
-        #     - awg-server
+      - awg-server
     command:
       - "--cleanup"
       - "--label-enable"

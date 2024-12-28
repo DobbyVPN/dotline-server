@@ -2,12 +2,12 @@
    debug
 }
 
-<domain-name> {
+{$DOMAIN_NAME} {
     @cloakPath {
-        path /<special-url>
+        path /{$SPECIAL_URL}
     }
     handle @cloakPath {
-        reverse_proxy @cloakPath 127.0.0.1:<cloak-server-port>
+        reverse_proxy @cloakPath ck-server:{$CLOAK_SERVER_PORT}
     }
     
     handle {
