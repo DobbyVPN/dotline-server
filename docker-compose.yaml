@@ -17,7 +17,9 @@ services:
       - SPECIAL_URL=${SPECIAL_URL}
       - CLOAK_SERVER_PORT=${CLOAK_SERVER_PORT}
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile  
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile  
+      - ./caddy/data:/data
+      - ./caddy/config:/config
     restart: always
 
 
@@ -32,6 +34,7 @@ services:
       - CLOAK_PRIVATE_KEY=${CLOAK_PRIVATE_KEY}
       - CLOAK_USER_UID=${CLOAK_USER_UID}
       - CLOAK_ADMIN_UID=${CLOAK_ADMIN_UID}
+      - OUTLINE_KEYS_PORT=${OUTLINE_KEYS_PORT}
     labels:
       com.centurylinklabs.watchtower.enable: "true"
     volumes:
@@ -48,8 +51,7 @@ services:
     networks:
       - my_network
     ports:
-      - 127.0.0.1:${OUTLINE_API_PORT}:${OUTLINE_API_PORT}
-      - 127.0.0.1:${OUTLINE_KEYS_PORT}:${OUTLINE_KEYS_PORT}
+      - 127.0.0.1:${OUTLINE_API_PORT}:${OUTLINE_API_PORT} 
 
     environment:
       - SB_STATE_DIR=/opt/outline/persisted-state

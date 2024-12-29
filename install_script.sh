@@ -1,5 +1,8 @@
 #!/bin/bash
 
+touch logs.txt
+exec > >(tee -a logs.txt) 2>&1
+
 function main {
     
     CLOAK_SERVER_PORT=8443
@@ -13,10 +16,11 @@ function main {
     fi
     SPECIAL_URL=$(echo `head /dev/urandom | tr -dc A-Za-z0-9 | head -c40`)
 
-    # wget -O - https://get.docker.com | sudo bash # this line is needed!!
+    wget -O - https://get.docker.com | sudo bash 
 
     wget -O - https://raw.githubusercontent.com/Jigsaw-Code/outline-apps/master/server_manager/install_scripts/install_server.sh | sudo bash -s -- --hostname 127.0.0.1 --api-port $OUTLINE_API_PORT --keys-port $OUTLINE_KEYS_PORT
-
+	
+    ./install_server.sh --hostname 127.0.0.1 --api-port $OUTLINE_API_PORT --keys-port $OUTLINE_KEYS_PORT
     docker ps --format "{{.Names}}" | sort | xargs --verbose --max-args=1 -- docker stop
     docker ps -a --format "{{.Names}}" | sort | xargs --verbose --max-args=1 -- docker rm
 
