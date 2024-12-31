@@ -22,7 +22,6 @@ services:
       - ./caddy/config:/config
     restart: always
 
-
   cloak-server:
     image: ghcr.io/dobbyvpn/dobbyvpn-server/cloak-server:v2
     container_name: ck-server
@@ -56,8 +55,8 @@ services:
       - SB_STATE_DIR=/opt/outline/persisted-state
       - SB_API_PORT=${OUTLINE_API_PORT}
       - SB_API_PREFIX=${OUTLINE_API_PREFIX}
-      - SB_CERTIFICATE_FILE=${SB_STATE_DIR}/shadowbox-selfsigned.crt
-      - SB_PRIVATE_KEY_FILE=${SB_STATE_DIR}/shadowbox-selfsigned.key
+      - SB_CERTIFICATE_FILE=/opt/outline/persisted-state/shadowbox-selfsigned.crt
+      - SB_PRIVATE_KEY_FILE=/opt/outline/persisted-state/shadowbox-selfsigned.key
     labels:
       com.centurylinklabs.watchtower.enable: "true"
     volumes:

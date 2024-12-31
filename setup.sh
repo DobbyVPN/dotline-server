@@ -29,13 +29,13 @@ docker ps -a --format "{{.Names}}" | sort | xargs --verbose --max-args=1 -- dock
 OUTLINE_API_PREFIX=$(tac /opt/outline/access.txt | rev | grep '/' | cut -d'/' -f1 | rev)
 
 touch .env
-docker run --rm -v $(pwd)/.env:/app/.env ghcr.io/dobbyvpn/dobbyvpn-server/cloak-server:v2.10.0 sh -c "
-KEYPAIRS=$(/app/ck-server -key)
+docker run --rm -v $(pwd)/.env:/app/.env ghcr.io/dobbyvpn/dobbyvpn-server/cloak-server:v2 sh -c "
+KEYPAIRS=\$(/app/ck-server -key)
 cat << EOF >> /app/.env
-CLOAK_PRIVATE_KEY=$(echo $KEYPAIRS | cut -d' ' -f13)
-CLOAK_PUBLIC_KEY=$(echo $KEYPAIRS | cut -d' ' -f5)
-CLOAK_USER_UID=$(/app/ck-server -uid | cut -d' ' -f4)
-CLOAK_ADMIN_UID=$(/app/ck-server -uid | cut -d' ' -f4)
+CLOAK_PRIVATE_KEY=\$(echo \$KEYPAIRS | cut -d' ' -f13)
+CLOAK_PUBLIC_KEY=\$(echo \$KEYPAIRS | cut -d' ' -f5)
+CLOAK_USER_UID=\$(/app/ck-server -uid | cut -d' ' -f4)
+CLOAK_ADMIN_UID=\$(/app/ck-server -uid | cut -d' ' -f4)
 EOF"
 
 cat << EOF >> ".env"
