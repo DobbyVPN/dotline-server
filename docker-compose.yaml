@@ -1,7 +1,7 @@
 version: '3.8'
 
 networks:
-  my_network:
+  cloak_ss_network:
     driver: bridge
 
 services:
@@ -9,7 +9,7 @@ services:
     image: caddy:2.8.4
     container_name: caddy
     networks:
-      - my_network
+      - cloak_ss_network
     ports:
       - 443:443/tcp
     environment:
@@ -27,7 +27,7 @@ services:
     image: ghcr.io/dobbyvpn/dobbyvpn-server/cloak-server:v2
     container_name: ck-server
     networks:
-      - my_network
+      - cloak_ss_network
     environment:
       - CLOAK_SERVER_PORT=${CLOAK_SERVER_PORT}
       - DOMAIN_NAME=${DOMAIN_NAME}
@@ -49,16 +49,15 @@ services:
     image: quay.io/outline/shadowbox:stable
     container_name: shadowbox
     networks:
-      - my_network
+      - cloak_ss_network
     ports:
       - 127.0.0.1:${OUTLINE_API_PORT}:${OUTLINE_API_PORT} 
-
     environment:
       - SB_STATE_DIR=/opt/outline/persisted-state
       - SB_API_PORT=${OUTLINE_API_PORT}
       - SB_API_PREFIX=${OUTLINE_API_PREFIX}
-      - SB_CERTIFICATE_FILE=/opt/outline/persisted-state/shadowbox-selfsigned.crt
-      - SB_PRIVATE_KEY_FILE=/opt/outline/persisted-state/shadowbox-selfsigned.key
+      - SB_CERTIFICATE_FILE=${SB_STATE_DIR}/shadowbox-selfsigned.crt
+      - SB_PRIVATE_KEY_FILE=${SB_STATE_DIR}/shadowbox-selfsigned.key
     labels:
       com.centurylinklabs.watchtower.enable: "true"
     volumes:
