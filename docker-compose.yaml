@@ -1,15 +1,18 @@
 version: '3.8'
 
 networks:
-  cloak_ss_network:
+  caddy_cloak_ss_network:
+    driver: bridge
+  caddy_xray_network:
     driver: bridge
 
 services:
-  caddy:
+  caddy_outline:
     image: caddy:2.8.4
-    container_name: caddy
+    container_name: caddy_outline
+    profiles: ["outline"]
     networks:
-      - cloak_ss_network
+      - caddy_cloak_ss_network
     ports:
       - 443:443/tcp
     environment:
@@ -17,16 +20,38 @@ services:
       - SPECIAL_URL=${SPECIAL_URL}
       - CLOAK_SERVER_PORT=${CLOAK_SERVER_PORT}
     volumes:
-      - ./caddy/Caddyfile:/etc/caddy/Caddyfile  
+      - ./caddy/Caddyfile_outline:/etc/caddy/Caddyfile  
       - ./caddy/data:/data
       - ./caddy/config:/config
-    restart: always
+    restart: unless-stopped
+
+  caddy_xray:
+    image: caddy:2.8.4
+    container_name: caddy_xray
+    profiles: ["xray"]
+    networks:
+      - caddy_xray_network
+    ports:
+      - 8080:80
+    healthcheck:
+      test: ["CMD", "test", "-d", "/data/caddy/certificates"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    environment:
+      - DOMAIN_NAME=${DOMAIN_NAME}
+    volumes:
+      - ./caddy/Caddyfile_xray:/etc/caddy/Caddyfile
+      - ./caddy/data:/data
+      - ./caddy/config:/config
+    restart: unless-stopped
 
   cloak-server:
     image: ghcr.io/dobbyvpn/dobbyvpn-server/cloak-server:v2
     container_name: ck-server
+    profiles: ["outline"]
     networks:
-      - cloak_ss_network
+      - caddy_cloak_ss_network
     environment:
       - CLOAK_SERVER_PORT=${CLOAK_SERVER_PORT}
       - DOMAIN_NAME=${DOMAIN_NAME}
@@ -42,13 +67,14 @@ services:
       sh -c "
       envsubst < /app/cloak-server-template.conf > /app/cloak-server.conf &&
       exec /app/ck-server -c /app/cloak-server.conf"
-    restart: always
+    restart: unless-stopped
 
   shadowbox:
     image: quay.io/outline/shadowbox:stable
     container_name: shadowbox
+    profiles: ["outline"]
     networks:
-      - cloak_ss_network
+      - caddy_cloak_ss_network
     ports:
       - 127.0.0.1:${OUTLINE_API_PORT}:${OUTLINE_API_PORT} 
     environment:
@@ -61,11 +87,12 @@ services:
       com.centurylinklabs.watchtower.enable: "true"
     volumes:
       - /opt/outline/persisted-state:/opt/outline/persisted-state
-    restart: "always"
+    restart: unless-stopped
 
   awg-server:
     image: ghcr.io/dobbyvpn/dobbyvpn-server/awg-server:v0.2
     container_name: awg-server
+    profiles: ["awg"]
     cap_add:
       - SYS_MODULE
       - NET_ADMIN
@@ -77,18 +104,44 @@ services:
       - ${PWD}/awg:/etc/amnezia/amneziawg
     labels:
       com.centurylinklabs.watchtower.enable: "true"
-    privileged: true
-    restart: "always"
+    privileged: "true"
+    restart: unless-stopped
+
+  xray-server:
+    image: teddysun/xray:24.12.31
+    container_name: xray-server
+    profiles: ["xray"]
+    networks:
+      - caddy_xray_network
+    depends_on:
+      caddy_xray: 
+        condition: service_healthy
+    ports:
+      - 443:443
+    environment:
+      - DOMAIN_NAME=${DOMAIN_NAME}
+      - XRAY_CLIENT_UUID=${XRAY_CLIENT_UUID}
+    volumes:
+      - ./xray:/etc/xray   # For xray config
+      - ${CERT_DIR}/${DOMAIN_NAME}:/root  # For TLS cert files created by Caddy
+    entrypoint: |
+      sh -c "
+      apk add --no-cache gettext &&
+      envsubst < /etc/xray/config-template.json > /etc/xray/config.json &&
+      exec /usr/bin/xray -config /etc/xray/config.json"
+    restart: unless-stopped
 
   watchtower:
     image: containrrr/watchtower
     container_name: watchtower
+    profiles: ["outline", "awg", "xray"]
     network_mode: "bridge"
-    depends_on:
-      - caddy
-      - cloak-server
-      - shadowbox
-      - awg-server
+    #depends_on:
+    #  - caddy
+    #  - cloak-server
+    #  - shadowbox
+    #  - awg-server
+    #  - xray-server
     command:
       - "--cleanup"
       - "--label-enable"
@@ -98,4 +151,4 @@ services:
       com.centurylinklabs.watchtower: "true"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    restart: "always"
+    restart: unless-stopped
