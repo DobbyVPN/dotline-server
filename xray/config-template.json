@@ -1,0 +1,61 @@
+{
+    "log": {
+        "loglevel": "warning"
+    },
+    "routing": {
+        "domainStrategy": "AsIs",
+        "rules": [
+	    {
+	    	"type": "field",
+		"inboundTag": "proxy-in-vless",
+		"outboundTag": "direct"
+	    }
+	]
+    },
+    "inbounds": [
+        {
+	    "tag": "proxy-in-vless",
+            "port": 443, 
+            "protocol": "vless",
+            "settings": {
+                "clients": [
+                    {
+                        "id": "${XRAY_CLIENT_UUID}", 
+                        "flow": "xtls-rprx-vision"
+                    }
+                ],
+                "decryption": "none"
+            },
+            "streamSettings": {
+                "network": "tcp",
+                "security": "tls",
+                "tlsSettings": {
+                    "alpn": [
+			"http/1.1",
+                        "h2"
+                     ],
+                    "certificates": [
+                        {
+                            "certificateFile": "/root/${DOMAIN_NAME}.crt", 
+                            "keyFile": "/root/${DOMAIN_NAME}.key" 
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "outbounds": [
+	{
+	    "protocol": "freedom",
+            "settings": {
+                "redirect": "vk.com:443"
+            },
+      	    "tag": "reverse"
+	},
+	{
+            "protocol": "freedom",
+            "tag": "direct"
+        }
+
+    ]
+}

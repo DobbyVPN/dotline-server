@@ -3,8 +3,6 @@ version: '3.8'
 networks:
   caddy_cloak_ss_network:
     driver: bridge
-  caddy_xray_network:
-    driver: bridge
 
 services:
   caddy_outline:
@@ -21,27 +19,6 @@ services:
       - CLOAK_SERVER_PORT=${CLOAK_SERVER_PORT}
     volumes:
       - ./caddy/Caddyfile_outline:/etc/caddy/Caddyfile  
-      - ./caddy/data:/data
-      - ./caddy/config:/config
-    restart: unless-stopped
-
-  caddy_xray:
-    image: caddy:2.8.4
-    container_name: caddy_xray
-    profiles: ["xray"]
-    networks:
-      - caddy_xray_network
-    ports:
-      - 8080:80
-    healthcheck:
-      test: ["CMD", "test", "-d", "/data/caddy/certificates"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-    environment:
-      - DOMAIN_NAME=${DOMAIN_NAME}
-    volumes:
-      - ./caddy/Caddyfile_xray:/etc/caddy/Caddyfile
       - ./caddy/data:/data
       - ./caddy/config:/config
     restart: unless-stopped
@@ -111,11 +88,6 @@ services:
     image: teddysun/xray:24.12.31
     container_name: xray-server
     profiles: ["xray"]
-    networks:
-      - caddy_xray_network
-    depends_on:
-      caddy_xray: 
-        condition: service_healthy
     ports:
       - 443:443
     environment:
@@ -124,6 +96,8 @@ services:
     volumes:
       - ./xray:/etc/xray   # For xray config
       - ${CERT_DIR}/${DOMAIN_NAME}:/root  # For TLS cert files created by Caddy
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
     entrypoint: |
       sh -c "
       apk add --no-cache gettext &&
@@ -136,12 +110,6 @@ services:
     container_name: watchtower
     profiles: ["outline", "awg", "xray"]
     network_mode: "bridge"
-    #depends_on:
-    #  - caddy
-    #  - cloak-server
-    #  - shadowbox
-    #  - awg-server
-    #  - xray-server
     command:
       - "--cleanup"
       - "--label-enable"
