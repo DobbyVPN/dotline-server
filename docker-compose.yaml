@@ -81,7 +81,8 @@ services:
       - ${PWD}/awg:/etc/amnezia/amneziawg
     labels:
       com.centurylinklabs.watchtower.enable: "true"
-    privileged: "true"
+    devices:
+      - /dev/net/tun
     restart: unless-stopped
 
   xray-server:

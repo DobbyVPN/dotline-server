@@ -35,6 +35,15 @@ SPECIAL_URL=${SPECIAL_URL}
 EOF
 }
 
+function awg_processing {
+cat << EOF >> ".env"
+DOMAIN_NAME=${DOMAIN_NAME}
+CLOAK_SERVER_PORT=33333
+OUTLINE_API_PORT=33333
+EOF
+
+}
+
 
 function xray_processing {
     XRAY_CLIENT_UUID=$(echo `uuidgen`)
@@ -104,6 +113,8 @@ wget -O - https://get.docker.com | sudo bash
 
 if [ "$choice_number" -eq 1 ]; then
     outline_processing
+elif [ "$choice_number" -eq 2 ]; then
+    awg_processing
 elif [ "$choice_number" -eq 3 ]; then
     xray_processing
 fi
