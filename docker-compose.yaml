@@ -1,12 +1,10 @@
-version: '3.8'
-
 networks:
   caddy_cloak_ss_network:
     driver: bridge
 
 services:
   caddy_outline:
-    image: caddy:2.8.4
+    image: caddy:2
     container_name: caddy_outline
     profiles: ["outline"]
     networks:
@@ -15,7 +13,7 @@ services:
       - 443:443/tcp
     environment:
       - DOMAIN_NAME=${DOMAIN_NAME}
-      - SPECIAL_URL=${SPECIAL_URL}
+      - CLOAK_SECRET=${CLOAK_SECRET}
       - CLOAK_SERVER_PORT=${CLOAK_SERVER_PORT}
     volumes:
       - ./caddy/Caddyfile_outline:/etc/caddy/Caddyfile  
@@ -29,21 +27,12 @@ services:
     profiles: ["outline"]
     networks:
       - caddy_cloak_ss_network
-    environment:
-      - CLOAK_SERVER_PORT=${CLOAK_SERVER_PORT}
-      - DOMAIN_NAME=${DOMAIN_NAME}
-      - CLOAK_PRIVATE_KEY=${CLOAK_PRIVATE_KEY}
-      - CLOAK_USER_UID=${CLOAK_USER_UID}
-      - CLOAK_ADMIN_UID=${CLOAK_ADMIN_UID}
-      - OUTLINE_KEYS_PORT=${OUTLINE_KEYS_PORT}
     labels:
       com.centurylinklabs.watchtower.enable: "true"
     volumes:
-      - ./cloak-server.conf:/app/cloak-server-template.conf
+      - ./cloak/cloak-server.conf:/app/cloak-server.conf
     entrypoint: |
-      sh -c "
-      envsubst < /app/cloak-server-template.conf > /app/cloak-server.conf &&
-      exec /app/ck-server -c /app/cloak-server.conf"
+      sh -c "exec /app/ck-server -c /app/cloak-server.conf"
     restart: unless-stopped
 
   shadowbox:
@@ -53,7 +42,7 @@ services:
     networks:
       - caddy_cloak_ss_network
     ports:
-      - 127.0.0.1:${OUTLINE_API_PORT}:${OUTLINE_API_PORT} 
+      - 127.0.0.1:${OUTLINE_API_PORT:-11111}:${OUTLINE_API_PORT:-22222} 
     environment:
       - SB_STATE_DIR=/opt/outline/persisted-state
       - SB_API_PORT=${OUTLINE_API_PORT}
@@ -96,14 +85,11 @@ services:
       - XRAY_CLIENT_UUID=${XRAY_CLIENT_UUID}
     volumes:
       - ./xray:/etc/xray   # For xray config
-      - ${CERT_DIR}/${DOMAIN_NAME}:/root  # For TLS cert files created by Caddy
+      - ${CERT_DIR}:/root  # For TLS cert files created by Caddy
     labels:
       com.centurylinklabs.watchtower.enable: "true"
     entrypoint: |
-      sh -c "
-      apk add --no-cache gettext &&
-      envsubst < /etc/xray/config-template.json > /etc/xray/config.json &&
-      exec /usr/bin/xray -config /etc/xray/config.json"
+      sh -c "exec /usr/bin/xray -config /etc/xray/config.json"
     restart: unless-stopped
 
   watchtower:

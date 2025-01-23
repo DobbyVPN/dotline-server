@@ -48,6 +48,7 @@ jobs:
           VB="v$A.$B"
           VC="v$A.$B.$C"
           VD="v$A.$B.$C.$D"
+          cd docker
           docker build -f Dockerfile-cloak-server -t "$IMAGE_NAME:$VA" -t "$IMAGE_NAME:$VB" -t "$IMAGE_NAME:$VC" -t "$IMAGE_NAME:$VD" -t "$IMAGE_NAME:latest" .
           docker push "$IMAGE_NAME" --all-tags
       
@@ -64,7 +65,7 @@ jobs:
           git clone https://github.com/amnezia-vpn/amneziawg-go
           cd amneziawg-go
           rm Dockerfile
-          cp ../Dockerfile-awg-server Dockerfile
+          cp ../docker/Dockerfile-awg-server Dockerfile
           AWG_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1)).${{ github.run_number }}
           echo "AWG_VERSION=$AWG_VERSION"
           echo "AWG_VERSION=$AWG_VERSION" >> $GITHUB_ENV

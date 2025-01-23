@@ -36,7 +36,7 @@
                      ],
                     "certificates": [
                         {
-                            "certificateFile": "/root/${DOMAIN_NAME}.crt", 
+                            "certificateFile": "/root/${DOMAIN_NAME}.cer", 
                             "keyFile": "/root/${DOMAIN_NAME}.key" 
                         }
                     ]

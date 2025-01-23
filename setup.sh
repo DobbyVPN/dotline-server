@@ -8,14 +8,17 @@ function outline_processing {
     CLOAK_SERVER_PORT=8443
     OUTLINE_API_PORT=8453
     OUTLINE_KEYS_PORT=8454
-    SPECIAL_URL=$(echo `head /dev/urandom | tr -dc A-Za-z0-9 | head -c40`)
+    CLOAK_SECRET=$(echo `head /dev/urandom | tr -dc A-Za-z0-9 | head -c40`)
 
     wget -O - https://raw.githubusercontent.com/Jigsaw-Code/outline-apps/master/server_manager/install_scripts/install_server.sh | sudo bash -s -- --hostname 127.0.0.1 --api-port $OUTLINE_API_PORT --keys-port $OUTLINE_KEYS_PORT
 
     docker ps --format "{{.Names}}" | sort | xargs --verbose --max-args=1 -- docker stop
     docker ps -a --format "{{.Names}}" | sort | xargs --verbose --max-args=1 -- docker rm
 
+    # It extracts API_PREFIX from outline url string. It needs for starting shadowbox 
     OUTLINE_API_PREFIX=$(tac /opt/outline/access.txt | rev | grep '/' | cut -d'/' -f1 | rev)
+
+    # It is needed for Cloak configuration and getting credentials
     docker run --rm -v $(pwd)/.env:/app/.env ghcr.io/dobbyvpn/dobbyvpn-server/cloak-server:v2 sh -c "
 KEYPAIRS=\$(/app/ck-server -key)
 cat << EOF >> /app/.env
@@ -25,21 +28,28 @@ CLOAK_USER_UID=\$(/app/ck-server -uid | cut -d' ' -f4)
 CLOAK_ADMIN_UID=\$(/app/ck-server -uid | cut -d' ' -f4)
 EOF"
 
+# writing credentials to .env
 cat << EOF >> ".env"
 OUTLINE_API_PORT=${OUTLINE_API_PORT}
 OUTLINE_KEYS_PORT=${OUTLINE_KEYS_PORT}
 OUTLINE_API_PREFIX=${OUTLINE_API_PREFIX}
 CLOAK_SERVER_PORT=${CLOAK_SERVER_PORT}
 DOMAIN_NAME=${DOMAIN_NAME}
-SPECIAL_URL=${SPECIAL_URL}
+CLOAK_SECRET=${CLOAK_SECRET}
 EOF
+
+    set -a
+    source .env
+    set +a
+
+    envsubst < cloak/cloak-server.conf > cloak/cloak-server.conf.tmp
+    mv cloak/cloak-server.conf.tmp cloak/cloak-server.conf
 }
 
-function awg_processing {
+function awg_config {
+    touch awg/wg0.conf
 cat << EOF >> ".env"
 DOMAIN_NAME=${DOMAIN_NAME}
-CLOAK_SERVER_PORT=33333
-OUTLINE_API_PORT=33333
 EOF
 
 }
@@ -48,32 +58,23 @@ EOF
 function xray_processing {
     XRAY_CLIENT_UUID=$(echo `uuidgen`)
 	
-    # It is only for certificates generation only
-    docker run -d \
-  --name caddy_outline \
-  --publish 443:443/tcp \
-  --env DOMAIN_NAME=${DOMAIN_NAME} \
-  --env SPECIAL_URL=fake \
-  --env CLOAK_SERVER_PORT=33333 \
-  --volume $(pwd)/caddy/Caddyfile_outline:/etc/caddy/Caddyfile \
-  --volume $(pwd)/caddy/data:/data \
-  --volume $(pwd)/caddy/config:/config \
-  caddy:2.8.4
-
-    sleep 3
-    while ! test -d "./caddy/data/caddy/certificates"; do
-        sleep 1
-    done
-    docker stop "caddy_outline"
-    docker rm "caddy_outline"
+    # certificate generation 
+    wget -O -  https://get.acme.sh | sh
+    ~/.acme.sh/acme.sh --upgrade --auto-upgrade
+    ~/.acme.sh/acme.sh --issue --server letsencrypt -d ${DOMAIN_NAME} --standalone --keylength ec-256
 
     cat << EOF >> ".env"
 DOMAIN_NAME=${DOMAIN_NAME}
-CERT_DIR=./caddy/data/caddy/certificates/acme-v02.api.letsencrypt.org-directory
+CERT_DIR=/root/.acme.sh/${DOMAIN_NAME}_ecc
 XRAY_CLIENT_UUID=${XRAY_CLIENT_UUID}
-CLOAK_SERVER_PORT=33333
-OUTLINE_API_PORT=33333
 EOF
+
+    set -a
+    source .env
+    set +a
+
+    envsubst < xray/config.json > xray/config.json.tmp
+    mv xray/config.json.tmp xray/config.json
 
 }
 
@@ -83,6 +84,13 @@ if [ -z "$DOMAIN_NAME" ]; then
     echo "Error: you didn't enter domain name!" >&2
     exit 1
 fi
+
+# Checking domain resolution
+if ! host "$DOMAIN_NAME" > /dev/null 2>&1; then
+    echo "Error: invalid or non-existent domain name!" >&2
+    exit 1
+fi
+echo "Domain name is valid: $DOMAIN_NAME"
 
 echo "Choose the proxy server:"
 echo "1 - outline"
@@ -109,12 +117,14 @@ case "$user_choice" in
     ;;
 esac
 
+mkdir caddy/config caddy/data
+apt install gettext
 wget -O - https://get.docker.com | sudo bash 
 
 if [ "$choice_number" -eq 1 ]; then
     outline_processing
 elif [ "$choice_number" -eq 2 ]; then
-    awg_processing
+    awg_config
 elif [ "$choice_number" -eq 3 ]; then
     xray_processing
 fi
