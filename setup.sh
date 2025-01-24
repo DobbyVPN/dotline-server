@@ -1,5 +1,8 @@
 #!/bin/bash
 
+#disable ipv6 since wget doesn't work with ipv6
+sysctl -w net.ipv6.conf.all.disable_ipv6=1
+
 touch logs.txt
 touch .env
 exec > >(tee -a logs.txt) 2>&1
