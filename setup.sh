@@ -57,6 +57,12 @@ EOF
 
 function xray_processing {
     XRAY_CLIENT_UUID=$(echo `uuidgen`)
+
+    # It receives the latest version of 24.x.x
+    # It is made so since docker doesn't pull image from such hub so image:24 or image:24.11
+    # If you decide to upgrade major version, just change value in grep below
+    XRAY_IMAGE_TAG=$(curl -s https://hub.docker.com/v2/repositories/teddysun/xray/tags | \
+jq -r '.results[].name' | grep '^24\.' | sort -Vr | head -n 1)
 	
     # certificate generation 
     wget -O -  https://get.acme.sh | sh
@@ -67,8 +73,10 @@ function xray_processing {
 DOMAIN_NAME=${DOMAIN_NAME}
 CERT_DIR=/root/.acme.sh/${DOMAIN_NAME}_ecc
 XRAY_CLIENT_UUID=${XRAY_CLIENT_UUID}
+XRAY_IMAGE_TAG=${XRAY_IMAGE_TAG}
 EOF
 
+    # it is needed for envsubst
     set -a
     source .env
     set +a
@@ -118,8 +126,14 @@ case "$user_choice" in
 esac
 
 mkdir caddy/config caddy/data
-apt install gettext
+apt install gettext socat jq
 wget -O - https://get.docker.com | sudo bash 
+
+# It receives the latest version of 24.x.x 
+# It is made so since docker doesn't pull image from such hub so image:24 or image:24.11 
+# If you decide to upgrade major version, just change value in grep below
+XRAY_IMAGE_TAG=$(curl -s https://hub.docker.com/v2/repositories/teddysun/xray/tags | \
+jq -r '.results[].name' | grep '^24\.' | sort -Vr | head -n 1)
 
 if [ "$choice_number" -eq 1 ]; then
     outline_processing

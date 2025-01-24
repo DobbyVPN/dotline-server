@@ -75,7 +75,7 @@ services:
     restart: unless-stopped
 
   xray-server:
-    image: teddysun/xray:24.12.31
+    image: teddysun/xray:${XRAY_IMAGE_TAG:-latest}
     container_name: xray-server
     profiles: ["xray"]
     ports:
