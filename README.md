@@ -102,6 +102,34 @@ cd DobbyVPN-server
 ```
 </details>
 
+**XRay**
+
+Добавление пользователя происходит путем вставки нового Xray пользователя в конфиг сервера config.json.
+
+Вставка происходит в секцию clients. `inbounds -> settings -> clients`.
+
+Секция clients выглядит так: 
+```json
+ "clients": [
+                    {
+                        "id": "${XRAY_CLIENT_UUID1}",
+                        "flow": "xtls-rprx-vision"
+                    },
+                    {
+                        "id": "${XRAY_CLIENT_UUID2}",
+                        "flow": "xtls-rprx-vision"
+                    },
+                    {
+                        "id": "${XRAY_CLIENT_UUID3}",
+                        "flow": "xtls-rprx-vision"
+                    }
+                ]
+```
+
+После добавления контейнер с XRay надо перезапустить. Также можно проверить правильность конфиг командой 
+`xray -test -config /path/to/config.json`
+
+
 Environment variables are stored in `.env` file, all log information in `logs.txt` file.
 Installation script: `setup.sh`. It works in an interactive mode without having to enter params via cli keys.
 
