@@ -1,8 +1,5 @@
 #!/bin/bash
 
-#disable ipv6 since wget doesn't work with ipv6
-sysctl -w net.ipv6.conf.all.disable_ipv6=1
-
 touch logs.txt
 touch .env
 exec > >(tee -a logs.txt) 2>&1
@@ -90,7 +87,14 @@ EOF
 }
 
 # Start main flow
-read -e -p "Enter Domain Name: " DOMAIN_NAME
+echo "Disabling IPv6, as we don't use it"
+cat <<EOF >> /etc/sysctl.d/99-no_ipv6.conf
+net.ipv6.conf.all.disable_ipv6 = 1
+net.ipv6.conf.default.disable_ipv6 = 1
+EOF
+service procps force-reload
+
+read -e -p "Please, enter domain name: " DOMAIN_NAME
 if [ -z "$DOMAIN_NAME" ]; then
     echo "Error: you didn't enter domain name!" >&2
     exit 1
@@ -103,7 +107,7 @@ if ! host "$DOMAIN_NAME" > /dev/null 2>&1; then
 fi
 echo "Domain name is valid: $DOMAIN_NAME"
 
-echo "Choose the proxy server:"
+echo "Choose VPN server to be installed:"
 echo "1 - outline"
 echo "2 - awg"
 echo "3 - xray"
