@@ -81,11 +81,9 @@ services:
     ports:
       - 443:443
     environment:
-      - DOMAIN_NAME=${DOMAIN_NAME}
-      - XRAY_CLIENT_UUID=${XRAY_CLIENT_UUID}
+      - XRAY_SERVER_PRIVATE_KEY=${XRAY_SERVER_PRIVATE_KEY}
     volumes:
       - ./xray:/etc/xray   # For xray config
-      - ${CERT_DIR}:/root  # For TLS cert files created by Caddy
     labels:
       com.centurylinklabs.watchtower.enable: "true"
     entrypoint: |

@@ -58,21 +58,20 @@ EOF
 
 
 function xray_processing {
-    XRAY_CLIENT_UUID=$(echo `uuidgen`)
 
     # It receives the latest version of 24.x.x
     XRAY_IMAGE_TAG=$(curl -s https://hub.docker.com/v2/repositories/teddysun/xray/tags | \
-jq -r '.results[].name' | grep '^${XRAY_MAJOR_VERSION}\.' | sort -Vr | head -n 1)
+jq -r '.results[].name' | grep "^${XRAY_MAJOR_VERSION}\." | sort -Vr | head -n 1)
 	
-    # certificate generation 
-    wget -O -  https://get.acme.sh | sh
-    ~/.acme.sh/acme.sh --upgrade --auto-upgrade
-    ~/.acme.sh/acme.sh --issue --server letsencrypt -d ${DOMAIN_NAME} --standalone --keylength ec-256
+	
+    docker run --rm -v $(pwd)/.env:/etc/.env teddysun/xray:${XRAY_IMAGE_TAG} sh -c "
+    KEYPAIRS=\$(xray x25519)
+cat << EOF >> /etc/.env
+XRAY_SERVER_PRIVATE_KEY=\$(echo "\$KEYPAIRS" | awk -F'Private key: | Public key:' '{print \$2}')
+XRAY_SERVER_PUBLIC_KEY=\$(echo "\$KEYPAIRS" | awk -F'Private key: | Public key:' '{print \$3}')
+EOF"    
 
     cat << EOF >> ".env"
-DOMAIN_NAME=${DOMAIN_NAME}
-CERT_DIR=/root/.acme.sh/${DOMAIN_NAME}_ecc
-XRAY_CLIENT_UUID=${XRAY_CLIENT_UUID}
 XRAY_IMAGE_TAG=${XRAY_IMAGE_TAG}
 EOF
 
@@ -87,7 +86,6 @@ EOF
 }
 
 # Start main flow
-
 
 echo "Disabling IPv6, as we don't use it"
 cat <<EOF >> /etc/sysctl.d/99-no_ipv6.conf

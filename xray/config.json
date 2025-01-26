@@ -1,61 +1,47 @@
 {
-    "log": {
-        "loglevel": "warning"
-    },
-    "routing": {
-        "domainStrategy": "AsIs",
-        "rules": [
-	    {
-	    	"type": "field",
-		"inboundTag": "proxy-in-vless",
-		"outboundTag": "direct"
-	    }
-	]
-    },
-    "inbounds": [
-        {
-	    "tag": "proxy-in-vless",
-            "port": 443, 
-            "protocol": "vless",
-            "settings": {
-                "clients": [
-                    {
-                        "id": "${XRAY_CLIENT_UUID}", 
-                        "flow": "xtls-rprx-vision"
-                    }
-                ],
-                "decryption": "none"
-            },
-            "streamSettings": {
-                "network": "tcp",
-                "security": "tls",
-                "tlsSettings": {
-                    "alpn": [
-			"http/1.1",
-                        "h2"
-                     ],
-                    "certificates": [
-                        {
-                            "certificateFile": "/root/fullchain.cer", 
-                            "keyFile": "/root/${DOMAIN_NAME}.key" 
-                        }
-                    ]
-                }
-            }
+  "log": {
+    "loglevel": "debug"
+  },
+  "inbounds": [
+    {
+      "port": 443,
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "dest": "example.com:443", 
+          "serverNames": [
+            "example.com",
+            "www.example.com"
+          ],
+          "privateKey": "${XRAY_SERVER_PRIVATE_KEY}",
+          "shortIds": [
+              ""
+          ]
         }
-    ],
-    "outbounds": [
-	{
-	    "protocol": "freedom",
-            "settings": {
-                "redirect": "vk.com:443"
-            },
-      	    "tag": "reverse"
-	},
-	{
-            "protocol": "freedom",
-            "tag": "direct"
-        }
-
-    ]
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": [
+          "http",
+          "tls",
+          "quic"
+        ],
+        "routeOnly": true
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "protocol": "freedom",
+      "tag": "direct"
+    }
+  ]
 }
