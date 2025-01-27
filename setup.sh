@@ -56,35 +56,6 @@ EOF
 
 }
 
-
-function xray_processing {
-
-    # It receives the latest version of 24.x.x
-    XRAY_IMAGE_TAG=$(curl -s https://hub.docker.com/v2/repositories/teddysun/xray/tags | \
-jq -r '.results[].name' | grep "^${XRAY_MAJOR_VERSION}\." | sort -Vr | head -n 1)
-	
-	
-    docker run --rm -v $(pwd)/.env:/etc/.env teddysun/xray:${XRAY_IMAGE_TAG} sh -c "
-    KEYPAIRS=\$(xray x25519)
-cat << EOF >> /etc/.env
-XRAY_SERVER_PRIVATE_KEY=\$(echo "\$KEYPAIRS" | awk -F'Private key: | Public key:' '{print \$2}')
-XRAY_SERVER_PUBLIC_KEY=\$(echo "\$KEYPAIRS" | awk -F'Private key: | Public key:' '{print \$3}')
-EOF"    
-
-    cat << EOF >> ".env"
-XRAY_IMAGE_TAG=${XRAY_IMAGE_TAG}
-EOF
-
-    # it is needed for envsubst
-    set -a
-    source .env
-    set +a
-
-    envsubst < xray/config.json > xray/config.json.tmp
-    mv xray/config.json.tmp xray/config.json
-
-}
-
 # Start main flow
 
 echo "Disabling IPv6, as we don't use it"
@@ -109,8 +80,7 @@ done
 echo "Choose VPN server to be installed:"
 echo "1 - outline"
 echo "2 - awg"
-echo "3 - xray"
-read -p "Your choice (1, 2 or 3): " user_choice
+read -p "Your choice (1, 2): " user_choice
 
 case "$user_choice" in
 1)
@@ -121,10 +91,6 @@ case "$user_choice" in
     choice_number=2
     choice_name="awg"
     ;;
-3)
-    choice_number=3
-    choice_name="xray"
-    ;;
 *)
     echo "ERROR: Wrong input. Try again!."
     get_choice # Recursion if wrong choice
@@ -132,9 +98,6 @@ case "$user_choice" in
 esac
 
 mkdir caddy/config caddy/data
-
-# acme.sh dependancy
-apt install -y socat
 
 # envsubst dependancy
 apt install -y gettext
@@ -148,11 +111,11 @@ if [ "$choice_number" -eq 1 ]; then
     outline_processing
 elif [ "$choice_number" -eq 2 ]; then
     awg_config
-elif [ "$choice_number" -eq 3 ]; then
-    xray_processing
 fi
 
 echo "Starting docker compose..."
 docker compose -f docker-compose.yaml --profile $choice_name up -d
+
+echo "OUTLINE_API_LINE=$(grep '"apiUrl"' logs.txt)" >> .env
 
 echo "All logs have been saved in logs.txt"

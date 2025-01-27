@@ -74,26 +74,10 @@ services:
       - /dev/net/tun
     restart: unless-stopped
 
-  xray-server:
-    image: teddysun/xray:${XRAY_IMAGE_TAG:-latest}
-    container_name: xray-server
-    profiles: ["xray"]
-    ports:
-      - 443:443
-    environment:
-      - XRAY_SERVER_PRIVATE_KEY=${XRAY_SERVER_PRIVATE_KEY}
-    volumes:
-      - ./xray:/etc/xray   # For xray config
-    labels:
-      com.centurylinklabs.watchtower.enable: "true"
-    entrypoint: |
-      sh -c "exec /usr/bin/xray -config /etc/xray/config.json"
-    restart: unless-stopped
-
   watchtower:
     image: containrrr/watchtower
     container_name: watchtower
-    profiles: ["outline", "awg", "xray"]
+    profiles: ["outline", "awg"]
     network_mode: "bridge"
     command:
       - "--cleanup"
