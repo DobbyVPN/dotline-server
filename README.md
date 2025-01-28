@@ -31,6 +31,14 @@ cd DobbyVPN-server
 
 </details>
 
+Adding user to AWG (in file `awg/wg0.conf`, only 3 lines per user):
+
+```bash
+[Peer]
+PublicKey = ...
+AllowedIPs = 10.0.0.<x>/32
+```
+
 Environment variables are stored in `.env` file, all log information in `logs.txt` file.
 Installation script: `setup.sh`. It works in an interactive mode without having to enter params via cli keys.
 
