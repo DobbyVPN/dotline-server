@@ -50,8 +50,73 @@ EOF
 
 function awg_config {
     touch awg/wg0.conf
+
+
+    # for creating keys 
+    apt install -y wireguard-tools
+
+    # Pointing boundaries 
+    Jc_min=1
+    Jc_max=128
+    Jmin_recommended=50
+    Jmax_max=1280
+    S1_max=1279
+    S2_max=1279
+    H_min=5
+    H_max=2147483647
+
+    Jc=$((RANDOM % (Jc_max - Jc_min + 1) + Jc_min))
+    Jmin=$Jmin_recommended
+    Jmax=$((RANDOM % (Jmax_max - Jmin + 1) + Jmin))
+
+# S1 and S2 are unique, with condition S1 + 56 ≠ S2
+while true; do
+    S1=$((RANDOM % (S1_max - 15 + 1) + 15))
+    S2=$((RANDOM % (S2_max - 15 + 1) + 15))
+    if [ $((S1 + 56)) -ne $S2 ]; then
+      break
+    fi
+done
+
+# H1, H2, H3, H4 are unique between each other
+while true; do
+    H1=$((RANDOM % (H_max - H_min + 1) + H_min))
+    H2=$((RANDOM % (H_max - H_min + 1) + H_min))
+    H3=$((RANDOM % (H_max - H_min + 1) + H_min))
+    H4=$((RANDOM % (H_max - H_min + 1) + H_min))
+    if [ $H1 -ne $H2 ] && [ $H1 -ne $H3 ] && [ $H1 -ne $H4 ] && \
+       [ $H2 -ne $H3 ] && [ $H2 -ne $H4 ] && [ $H3 -ne $H4 ]; then
+      break
+    fi
+done
+    # Key generation for awg server
+    AWG_PRIVATE_KEY=$(wg genkey)
+    AWG_PUBLIC_KEY=$(echo "$AWG_PRIVATE_KEY" | wg pubkey)
+
+cat <<EOF > awg/wg0.conf
+[Interface]
+Address = 10.0.0.1/24
+ListenPort = 51820
+PrivateKey = $AWG_PRIVATE_KEY
+
+Jc = $Jc
+Jmin = $Jmin
+Jmax = $Jmax
+S1 = $S1
+S2 = $S2
+H1 = $H1
+H2 = $H2
+H3 = $H3
+H4 = $H4
+
+PostUp = iptables -A FORWARD -i %i -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
+EOF
+
+
 cat << EOF >> ".env"
-DOMAIN_NAME=${DOMAIN_NAME}
+AWG_PRIVATE_KEY=${AWG_PRIVATE_KEY}
+AWG_PUBLIC_KEY=${AWG_PUBLIC_KEY}
 EOF
 
 }
@@ -65,22 +130,24 @@ net.ipv6.conf.default.disable_ipv6 = 1
 EOF
 service procps force-reload
 
-# Checking domain resolution
-while true; do
-    read -p "Enter a domain name: " DOMAIN_NAME
-
-    if host "$DOMAIN_NAME" > /dev/null 2>&1; then
-        echo "Domain name is valid."
-        break
-    else
-        echo "Error: invalid or non-existent domain name! Please try again." >&2
-    fi
-done
-
 echo "Choose VPN server to be installed:"
 echo "1 - outline"
 echo "2 - awg"
 read -p "Your choice (1, 2): " user_choice
+
+if [ "$user_choice" == 1 ]; then
+# Checking domain resolution
+  while true; do
+      read -p "Enter a domain name: " DOMAIN_NAME
+
+      if host "$DOMAIN_NAME" > /dev/null 2>&1; then
+          echo "Domain name is valid."
+          break
+      else
+          echo "Error: invalid or non-existent domain name! Please try again." >&2
+      fi
+  done
+fi
 
 case "$user_choice" in
 1)
@@ -116,6 +183,8 @@ fi
 echo "Starting docker compose..."
 docker compose -f docker-compose.yaml --profile $choice_name up -d
 
-echo "OUTLINE_API_LINE=$(grep '"apiUrl"' logs.txt)" >> .env
+if [ "$choice_name" == "outline" ]; then
+  echo "OUTLINE_API_LINE=$(grep '"apiUrl"' logs.txt)" >> .env
+fi
 
 echo "All logs have been saved in logs.txt"
