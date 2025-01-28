@@ -117,6 +117,15 @@ EOF
 cat << EOF >> ".env"
 AWG_PRIVATE_KEY=${AWG_PRIVATE_KEY}
 AWG_PUBLIC_KEY=${AWG_PUBLIC_KEY}
+Jc=${Jc}
+Jmin=${Jmin}
+Jmax=${Jmax}
+S1=${S1}
+S2=${S2}
+H1=${H1}
+H2=${H2}
+H3=${H3}
+H4=${H4}
 EOF
 
 }
