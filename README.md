@@ -61,7 +61,7 @@ H4 = ...
 PostUp = iptables -A FORWARD -i %i -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
 ```
-All random values are generated according to rules of AmneziaWG. Public and private keys from awg server are located in `.env` file.
+All random values are generated according to rules of AmneziaWG. Public and private keys from awg server and AWG specific params (Jc, Jmin, Jmax, S1, S2, H1, H2, H3, H4) are located in `.env` file.
 
 Environment variables are stored in `.env` file, all log information in `logs.txt` file.
 Installation script: `setup.sh`. It works in an interactive mode without having to enter params via cli keys.
