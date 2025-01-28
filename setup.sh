@@ -51,10 +51,6 @@ EOF
 function awg_config {
     touch awg/wg0.conf
 
-
-    # for creating keys 
-    apt install -y wireguard-tools
-
     # Pointing boundaries 
     Jc_min=1
     Jc_max=128
@@ -89,15 +85,12 @@ while true; do
       break
     fi
 done
-    # Key generation for awg server
-    AWG_PRIVATE_KEY=$(wg genkey)
-    AWG_PUBLIC_KEY=$(echo "$AWG_PRIVATE_KEY" | wg pubkey)
 
 cat <<EOF > awg/wg0.conf
 [Interface]
 Address = 10.0.0.1/24
 ListenPort = 51820
-PrivateKey = $AWG_PRIVATE_KEY
+PrivateKey = 
 
 Jc = $Jc
 Jmin = $Jmin
@@ -115,8 +108,6 @@ EOF
 
 
 cat << EOF >> ".env"
-AWG_PRIVATE_KEY=${AWG_PRIVATE_KEY}
-AWG_PUBLIC_KEY=${AWG_PUBLIC_KEY}
 Jc=${Jc}
 Jmin=${Jmin}
 Jmax=${Jmax}
