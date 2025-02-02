@@ -1,4 +1,9 @@
+import re
 import sys
+import json
+import decouple
+
+from outline_vpn.outline_vpn import OutlineVPN
 
 def print_help():
 	program_name = sys.argv[0]
@@ -42,11 +47,64 @@ def del_command(arguments):
 def list_command(arguments):
 	if len(arguments) == 1:
 		user_name = arguments[0]
+		connection_string = decouple.config("OUTLINE_API_LINE")
+		search_result = re.search(r"{\"apiUrl\":\"(\S+)\",\"certSha256\":\"(\S.+)\"}", connection_string)
 
-		# TODO
+		if search_result is None:
+			print("Invalid OUTLINE_API_LINE format")
+			exit(1)
+		else:
+			apiUrl = search_result.group(1)
+			certSha256 = search_result.group(2)
+			vpn_interface = OutlineVPN(api_url=apiUrl, cert_sha256=certSha256)
+			
+			keys_list = []
+
+			for key in vpn_interface.get_keys():
+				if key.name == user_name:
+					key_dict = {
+						"key_id": key.key_id,
+						"name": key.name,
+						"access_url": key.access_url
+					}
+					
+					keys_list.append(key_dict)
+
+			output_dict = {
+				"type": f"user {user_name}",
+				"keys": keys_list
+			}
+
+			print(json.dumps(output_dict, indent=4))
 	elif len(arguments) == 0:
-		# TODO
-		pass
+		connection_string = decouple.config("OUTLINE_API_LINE")
+		search_result = re.search(r"{\"apiUrl\":\"(\S+)\",\"certSha256\":\"(\S.+)\"}", connection_string)
+
+		if search_result is None:
+			print("Invalid OUTLINE_API_LINE format")
+			exit(1)
+		else:
+			apiUrl = search_result.group(1)
+			certSha256 = search_result.group(2)
+			vpn_interface = OutlineVPN(api_url=apiUrl, cert_sha256=certSha256)
+			
+			keys_list = []
+
+			for key in vpn_interface.get_keys():
+				key_dict = {
+					"key_id": key.key_id,
+					"name": key.name,
+					"access_url": key.access_url
+				}
+
+				keys_list.append(key_dict)
+
+			output_dict = {
+				"type": "all",
+				"keys": keys_list
+			}
+
+			print(json.dumps(output_dict, indent=4))
 	else:
 		print_help()
 		exit(1)
