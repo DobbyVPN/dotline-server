@@ -59,8 +59,29 @@ def del_command(arguments):
 		exit(1)
 	else:
 		user_name = arguments[0]
+		connection_string = decouple.config("OUTLINE_API_LINE")
+		search_result = re.search(r"{\"apiUrl\":\"(\S+)\",\"certSha256\":\"(\S.+)\"}", connection_string)
 
-		# TODO
+		if search_result is None:
+			print("Invalid OUTLINE_API_LINE format")
+			exit(1)
+		else:
+			apiUrl = search_result.group(1)
+			certSha256 = search_result.group(2)
+			vpn_interface = OutlineVPN(api_url=apiUrl, cert_sha256=certSha256)
+			
+			keys_list = []
+
+			for key in vpn_interface.get_keys():
+				if key.name == user_name:
+					keys_list.append(key_to_dict(key))
+					vpn_interface.delete_key(key.key_id)
+
+			output_dict = {
+				"keys": keys_list
+			}
+
+			print(json.dumps(output_dict, indent=4))
 
 def list_command(arguments):
 	if len(arguments) == 1:
