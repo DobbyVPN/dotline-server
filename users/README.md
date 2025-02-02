@@ -40,19 +40,25 @@ python3 users/<vpn interface>_management.py ARGS
 
 Add keys to the VPN to the provided user.
 
-> ARGS=add <user name>
+```
+ARGS=add <user name>
+```
 
 #### Delete key command
 
 Remove keys from the VPN for the provided user.
 
-> ARGS=del <user name>
+```
+ARGS=del <user name>
+```
 
 #### List keys
 
 Print all user keys if the user is given, othervise prints all keys
 
-> ARGS=list <optional user name>
+```
+ARGS=list <optional user name>
+```
 
 ## Supported VPNs
 
