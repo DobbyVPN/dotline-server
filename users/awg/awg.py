@@ -164,6 +164,20 @@ class AmneziaWGConfig:
 
 		return new_peer_config
 
+	def del_key(self, user_name: str) -> List[PeerConfig]:
+		i = 0
+		result = []
+
+		while i < len(self.peers):
+			if self.peers[i].name == user_name:
+				peer_config = self.peers.pop(i)
+				result.append(peer_config)
+			else:
+				i += 1
+
+		return result
+
+
 	def dump_to(self, output_file: str) -> str:
 		with open(output_file, 'w') as output_file:
 			output_file.write(self.interface.interface_string)

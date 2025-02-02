@@ -5,6 +5,10 @@ import decouple
 
 from awg.awg import InterfaceConfig, PeerConfig, AmneziaWGConfig
 
+
+AWG_CONFIG = "awg/wg0.conf"
+
+
 def print_help():
 	program_name = sys.argv[0]
 	help_message = f"""python3 {program_name} help
@@ -32,9 +36,9 @@ def add_command(arguments):
 		exit(1)
 	else:
 		user_name = arguments[0]
-		config = AmneziaWGConfig.from_file("awg/wg0.conf")
+		config = AmneziaWGConfig.from_file(AWG_CONFIG)
 		config.add_key(user_name)
-		config.dump_to("awg/wg0.conf")
+		config.dump_to(AWG_CONFIG)
 
 def del_command(arguments):
 	if len(arguments) > 1 or len(arguments) == 0:
@@ -42,18 +46,49 @@ def del_command(arguments):
 		exit(1)
 	else:
 		user_name = arguments[0]
-		
-		# TODO
+		config = AmneziaWGConfig.from_file(AWG_CONFIG)
+		config.del_key(user_name)
+		config.dump_to(AWG_CONFIG)
 
 def list_command(arguments):
 	if len(arguments) == 1:
 		user_name = arguments[0]
-		# TODO
-	elif len(arguments) == 0:
-		config = AmneziaWGConfig.from_file("awg/wg0.conf")
+		config = AmneziaWGConfig.from_file(AWG_CONFIG)
+		result = []
 
 		for peer in config.peers:
-			print(peer.server_config())
+			if peer.name == user_name:
+				key_dict = {
+					"server_config": peer.server_config(),
+					"client_config": peer.client_config(config.interface)
+				}
+
+				result.append(key_dict)
+
+		result_dics = {
+			"type": f"user {user_name}",
+			"keys": result
+		}
+
+		print(json.dumps(result_dics, indent=4))
+	elif len(arguments) == 0:
+		config = AmneziaWGConfig.from_file(AWG_CONFIG)
+		result = []
+
+		for peer in config.peers:
+			key_dict = {
+				"server_config": peer.server_config(),
+				"client_config": peer.client_config(config.interface)
+			}
+
+			result.append(key_dict)
+
+		result_dics = {
+			"type": "all",
+			"keys": result
+		}
+
+		print(json.dumps(result_dics, indent=4))
 	else:
 		print_help()
 		exit(1)
