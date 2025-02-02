@@ -1,0 +1,174 @@
+import re
+
+from typing import List, Optional
+from python_wireguard import Key
+
+SERVER_CONFIG_PATTERN = """[Peer]
+# Name = <Name>
+# PrivateKey = <ClientPrivateKey>
+PublicKey = <ClientPublicKey>
+AllowedIPs = <ClientAddress>
+"""
+
+CLIENT_CONFIG_PATTERN = """[Interface]
+PrivateKey = <ClientPrivateKey>
+# PublicKey = <ClientPublicKey>
+Address = <ClientAddress>
+Jc = <Jc>
+Jmin = <Jmin>
+Jmax = <Jmax>
+S1 = <S1>
+S2 = <S2>
+H1 = <H1>
+H2 = <H2>
+H3 = <H3>
+H4 = <H4>
+
+[Peer]
+AllowedIPs = 0.0.0.0/0
+Endpoint = <ServerHost>:<ServerPort>
+PersistentKeepalive = 60
+PublicKey = <ServerPublicKey>
+"""
+
+
+class InterfaceConfig:
+	def __init__(self, value: str, Jc: str, Jmin: str, Jmax: str, S1: str, S2: str, H1: str, H2: str, H3: str, H4: str):
+		self.value = value
+		self.Jc = Jc
+		self.Jmin = Jmin
+		self.Jmax = Jmax
+		self.S1 = S1
+		self.S2 = S2
+		self.H1 = H1
+		self.H2 = H2
+		self.H3 = H3
+		self.H4 = H4
+
+	@staticmethod
+	def from_string(value: str):
+		return InterfaceConfig(
+			value=value,
+			Jc=re.search(r"Jc = (\S+)", value).group(1),
+			Jmin=re.search(r"Jmin = (\S+)", value).group(1),
+			Jmax=re.search(r"Jmax = (\S+)", value).group(1),
+			S1=re.search(r"S1 = (\S+)", value).group(1),
+			S2=re.search(r"S2 = (\S+)", value).group(1),
+			H1=re.search(r"H1 = (\S+)", value).group(1),
+			H2=re.search(r"H2 = (\S+)", value).group(1),
+			H3=re.search(r"H3 = (\S+)", value).group(1),
+			H4=re.search(r"H4 = (\S+)", value).group(1))
+
+	@property
+	def interface_string(self):
+		return self.value
+	
+
+
+class PeerConfig:
+	def __init__(self, name: str, client_private: str, client_public: str, client_address: str):
+		self.name = name
+		self.client_private = client_private
+		self.client_public = client_public
+		self.client_address = client_address
+
+	@staticmethod
+	def from_string(value: str):
+		return PeerConfig(
+			name=re.search(r"# Name = (\S+)", value).group(1),
+			client_private=re.search(r"# PrivateKey = (\S+)", value).group(1),
+			client_public=re.search(r"PublicKey = (\S+)", value).group(1),
+			client_address=re.search(r"AllowedIPs = (\S+)", value).group(1))
+
+	def server_config(self):
+		return SERVER_CONFIG_PATTERN \
+			.replace("<Name>", self.name) \
+			.replace("<ClientPrivateKey>", self.client_private) \
+			.replace("<ClientPublicKey>", self.client_public) \
+			.replace("<ClientAddress>", self.client_address) \
+
+	def client_config(self, interface_config: InterfaceConfig):
+		return CLIENT_CONFIG_PATTERN \
+			.replace("<ClientPrivateKey>", self.client_private) \
+			.replace("<ClientPublicKey>", self.client_public) \
+			.replace("<ClientAddress>", self.client_address) \
+			.replace("<Jc>", interface_config.Jc) \
+			.replace("<Jmin>", interface_config.Jmin) \
+			.replace("<Jmax>", interface_config.Jmax) \
+			.replace("<S1>", interface_config.S1) \
+			.replace("<S2>", interface_config.S2) \
+			.replace("<H1>", interface_config.H1) \
+			.replace("<H2>", interface_config.H2) \
+			.replace("<H3>", interface_config.H3) \
+			.replace("<H4>", interface_config.H4)
+
+
+class AmneziaWGConfig:
+	def __init__(self, interface: InterfaceConfig, peers: List[PeerConfig]):
+		self.interface = interface
+		self.peers = peers
+
+	@staticmethod
+	def from_file(input_file: str):
+		interface_read = False
+		peer_read = False
+		current_value = ""
+		interface_config = None
+		peers = []
+
+		with open(input_file, 'r') as input:
+			for line in input:
+				stripped = line.rstrip()
+
+				if stripped == "[Interface]":
+					interface_read = True
+					peer_read = False
+					current_value = ""
+				elif stripped == "[Peer]":
+					if interface_read:
+						interface_config = InterfaceConfig.from_string(current_value)
+					elif peer_read:
+						peers.append(PeerConfig.from_string(current_value))
+
+					interface_read = False
+					peer_read = True
+					current_value = ""
+				
+				if stripped != "":
+					current_value += stripped
+					current_value += "\n"
+
+		if interface_read and current_value != "":
+			interface_config = InterfaceConfig.from_string(current_value)
+		elif peer_read and current_value != "":
+			peers.append(PeerConfig.from_string(current_value))
+
+		return AmneziaWGConfig(interface_config, peers)
+
+	def free_address(self) -> str:
+		x = 1
+
+		while True:
+			address = f"10.0.0.{x}/32"
+
+			if address not in map(lambda p: p.client_address, self.peers):
+				return address
+			else:
+				x += 1
+
+	def add_key(self, user_name: str) -> PeerConfig:
+		private, public = Key.key_pair()
+		address = self.free_address()
+		new_peer_config = PeerConfig(user_name, str(private), str(public), address)
+		self.peers.append(new_peer_config)
+
+		return new_peer_config
+
+	def dump_to(self, output_file: str) -> str:
+		with open(output_file, 'w') as output_file:
+			output_file.write(self.interface.interface_string)
+			output_file.write("\n")
+
+			for peer_config in self.peers:
+				output_file.write(peer_config.server_config())
+				output_file.write("\n")
