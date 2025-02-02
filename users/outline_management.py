@@ -26,14 +26,32 @@ def help_command(arguments):
 	else:
 		exit(0)
 
+def key_to_dict(outline_key):
+	return {
+		"key_id": outline_key.key_id,
+		"name": outline_key.name,
+		"access_url": outline_key.access_url
+	}
+
 def add_command(arguments):
 	if len(arguments) > 1 or len(arguments) == 0:
 		print_help()
 		exit(1)
 	else:
 		user_name = arguments[0]
+		connection_string = decouple.config("OUTLINE_API_LINE")
+		search_result = re.search(r"{\"apiUrl\":\"(\S+)\",\"certSha256\":\"(\S.+)\"}", connection_string)
 
-		# TODO
+		if search_result is None:
+			print("Invalid OUTLINE_API_LINE format")
+			exit(1)
+		else:
+			apiUrl = search_result.group(1)
+			certSha256 = search_result.group(2)
+			vpn_interface = OutlineVPN(api_url=apiUrl, cert_sha256=certSha256)
+			new_key = vpn_interface.create_key(key_id=None, name=user_name)
+
+			print(json.dumps(key_to_dict(new_key), indent=4))
 
 def del_command(arguments):
 	if len(arguments) > 1 or len(arguments) == 0:
@@ -62,13 +80,7 @@ def list_command(arguments):
 
 			for key in vpn_interface.get_keys():
 				if key.name == user_name:
-					key_dict = {
-						"key_id": key.key_id,
-						"name": key.name,
-						"access_url": key.access_url
-					}
-					
-					keys_list.append(key_dict)
+					keys_list.append(key_to_dict(key))
 
 			output_dict = {
 				"type": f"user {user_name}",
@@ -91,13 +103,7 @@ def list_command(arguments):
 			keys_list = []
 
 			for key in vpn_interface.get_keys():
-				key_dict = {
-					"key_id": key.key_id,
-					"name": key.name,
-					"access_url": key.access_url
-				}
-
-				keys_list.append(key_dict)
+				keys_list.append(key_to_dict(key))
 
 			output_dict = {
 				"type": "all",
