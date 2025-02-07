@@ -3,6 +3,7 @@ import sys
 import json
 import decouple
 
+from typing import List, Optional
 from outline_vpn.outline_vpn import OutlineVPN
 
 def print_help():
@@ -48,10 +49,14 @@ def add_command(arguments):
 		else:
 			apiUrl = search_result.group(1)
 			certSha256 = search_result.group(2)
-			vpn_interface = OutlineVPN(api_url=apiUrl, cert_sha256=certSha256)
-			new_key = vpn_interface.create_key(key_id=None, name=user_name)
+			result = add_command_logic(user_name, apiUrl, certSha256)
+			print(json.dumps(result, indent=4))
 
-			print(json.dumps(key_to_dict(new_key), indent=4))
+def add_command_logic(user_name: str, apiUrl: str, certSha256: str):
+	vpn_interface = OutlineVPN(api_url=apiUrl, cert_sha256=certSha256)
+	new_key = vpn_interface.create_key(key_id=None, name=user_name)
+
+	return key_to_dict(new_key)
 
 def del_command(arguments):
 	if len(arguments) > 1 or len(arguments) == 0:
@@ -68,73 +73,62 @@ def del_command(arguments):
 		else:
 			apiUrl = search_result.group(1)
 			certSha256 = search_result.group(2)
-			vpn_interface = OutlineVPN(api_url=apiUrl, cert_sha256=certSha256)
-			
-			keys_list = []
+			result = del_command_logic(user_name, apiUrl, certSha256)
+			print(json.dumps(result, indent=4))
 
-			for key in vpn_interface.get_keys():
-				if key.name == user_name:
-					keys_list.append(key_to_dict(key))
-					vpn_interface.delete_key(key.key_id)
+def del_command_logic(user_name: str, apiUrl: str, certSha256: str):
+	vpn_interface = OutlineVPN(api_url=apiUrl, cert_sha256=certSha256)
+	
+	keys_list = []
 
-			output_dict = {
-				"keys": keys_list
-			}
+	for key in vpn_interface.get_keys():
+		if key.name == user_name:
+			keys_list.append(key_to_dict(key))
+			vpn_interface.delete_key(key.key_id)
 
-			print(json.dumps(output_dict, indent=4))
+	output_dict = {
+		"keys": keys_list
+	}
+
+	return output_dict
 
 def list_command(arguments):
-	if len(arguments) == 1:
-		user_name = arguments[0]
-		connection_string = decouple.config("OUTLINE_API_LINE")
-		search_result = re.search(r"{\"apiUrl\":\"(\S+)\",\"certSha256\":\"(\S.+)\"}", connection_string)
-
-		if search_result is None:
-			print("Invalid OUTLINE_API_LINE format")
-			exit(1)
-		else:
-			apiUrl = search_result.group(1)
-			certSha256 = search_result.group(2)
-			vpn_interface = OutlineVPN(api_url=apiUrl, cert_sha256=certSha256)
-			
-			keys_list = []
-
-			for key in vpn_interface.get_keys():
-				if key.name == user_name:
-					keys_list.append(key_to_dict(key))
-
-			output_dict = {
-				"type": f"user {user_name}",
-				"keys": keys_list
-			}
-
-			print(json.dumps(output_dict, indent=4))
-	elif len(arguments) == 0:
-		connection_string = decouple.config("OUTLINE_API_LINE")
-		search_result = re.search(r"{\"apiUrl\":\"(\S+)\",\"certSha256\":\"(\S.+)\"}", connection_string)
-
-		if search_result is None:
-			print("Invalid OUTLINE_API_LINE format")
-			exit(1)
-		else:
-			apiUrl = search_result.group(1)
-			certSha256 = search_result.group(2)
-			vpn_interface = OutlineVPN(api_url=apiUrl, cert_sha256=certSha256)
-			
-			keys_list = []
-
-			for key in vpn_interface.get_keys():
-				keys_list.append(key_to_dict(key))
-
-			output_dict = {
-				"type": "all",
-				"keys": keys_list
-			}
-
-			print(json.dumps(output_dict, indent=4))
-	else:
+	if len(arguments) > 1:
 		print_help()
 		exit(1)
+	
+	if len(arguments) == 1:
+		user_name = arguments[0]
+	else:
+		user_name = None
+
+	connection_string = decouple.config("OUTLINE_API_LINE")
+	search_result = re.search(r"{\"apiUrl\":\"(\S+)\",\"certSha256\":\"(\S.+)\"}", connection_string)
+
+	if search_result is None:
+		print("Invalid OUTLINE_API_LINE format")
+		exit(1)
+	else:
+		apiUrl = search_result.group(1)
+		certSha256 = search_result.group(2)
+		result = list_command_logic(user_name, apiUrl, certSha256)
+		print(json.dumps(result, indent=4))
+
+def list_command_logic(user_name: Optional[str], apiUrl: str, certSha256: str):
+	vpn_interface = OutlineVPN(api_url=apiUrl, cert_sha256=certSha256)
+	
+	keys_list = []
+
+	for key in vpn_interface.get_keys():
+		if user_name is None or key.name == user_name:
+			keys_list.append(key_to_dict(key))
+
+	output_dict = {
+		"description": "All keys" if user_name is None else f"Keys for user \"{user_name}\"",
+		"keys": keys_list
+	}
+
+	return output_dict
 
 SUPPORTED_COMMANDS = {
 	"help": help_command,
