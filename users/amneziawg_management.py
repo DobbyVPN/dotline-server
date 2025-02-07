@@ -3,10 +3,11 @@ import sys
 import json
 import decouple
 
+from typing import List, Optional
 from awg.awg import InterfaceConfig, PeerConfig, AmneziaWGConfig
 
 
-AWG_CONFIG = "awg/wg0.conf"
+DEFAULT_AWG_CONFIG_PATH = "awg/wg0.conf"
 
 
 def print_help():
@@ -36,9 +37,13 @@ def add_command(arguments):
 		exit(1)
 	else:
 		user_name = arguments[0]
-		config = AmneziaWGConfig.from_file(AWG_CONFIG)
-		config.add_key(user_name)
-		config.dump_to(AWG_CONFIG)
+		add_command_logic(user_name)
+		exit(0)
+
+def add_command_logic(user_name: str, config_path: str = DEFAULT_AWG_CONFIG_PATH):
+	config = AmneziaWGConfig.from_file(config_path)
+	config.add_key(user_name)
+	config.dump_to(config_path)
 
 def del_command(arguments):
 	if len(arguments) > 1 or len(arguments) == 0:
@@ -46,52 +51,45 @@ def del_command(arguments):
 		exit(1)
 	else:
 		user_name = arguments[0]
-		config = AmneziaWGConfig.from_file(AWG_CONFIG)
-		config.del_key(user_name)
-		config.dump_to(AWG_CONFIG)
+		del_command_logic(user_name)
+		exit(0)
+
+def del_command_logic(user_name: str, config_path: str = DEFAULT_AWG_CONFIG_PATH):
+	config = AmneziaWGConfig.from_file(config_path)
+	config.del_key(user_name)
+	config.dump_to(config_path)
 
 def list_command(arguments):
 	if len(arguments) == 1:
 		user_name = arguments[0]
-		config = AmneziaWGConfig.from_file(AWG_CONFIG)
-		result = []
-
-		for peer in config.peers:
-			if peer.name == user_name:
-				key_dict = {
-					"server_config": peer.server_config(),
-					"client_config": peer.client_config(config.interface)
-				}
-
-				result.append(key_dict)
-
-		result_dics = {
-			"type": f"user {user_name}",
-			"keys": result
-		}
-
-		print(json.dumps(result_dics, indent=4))
+		result = list_command_logic(user_name)
+		print(json.dumps(result, indent=4))
+		exit(0)
 	elif len(arguments) == 0:
-		config = AmneziaWGConfig.from_file(AWG_CONFIG)
-		result = []
+		result = list_command_logic()
+		print(json.dumps(result, indent=4))
+		exit(0)
+	else:
+		print_help()
+		exit(1)
 
-		for peer in config.peers:
+def list_command_logic(user_name: Optional[str] = None, config_path: str = DEFAULT_AWG_CONFIG_PATH):
+	config = AmneziaWGConfig.from_file(config_path)
+	result = []
+
+	for peer in config.peers:
+		if user_name is None or peer.name == user_name:
 			key_dict = {
-				"server_config": peer.server_config(),
-				"client_config": peer.client_config(config.interface)
+				"key": peer.client_config(config.interface)
 			}
 
 			result.append(key_dict)
 
-		result_dics = {
-			"type": "all",
-			"keys": result
-		}
+	result_dics = {
+		"keys": result
+	}
 
-		print(json.dumps(result_dics, indent=4))
-	else:
-		print_help()
-		exit(1)
+	return result_dics
 
 SUPPORTED_COMMANDS = {
 	"help": help_command,

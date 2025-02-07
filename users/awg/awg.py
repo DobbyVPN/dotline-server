@@ -47,22 +47,30 @@ class InterfaceConfig:
 
 	@staticmethod
 	def from_string(value: str):
+		jc = re.search(r"Jc = (\S+)", value)
+		jmin = re.search(r"Jmin = (\S+)", value)
+		jmax = re.search(r"Jmax = (\S+)", value)
+		s1 = re.search(r"S1 = (\S+)", value)
+		s2 = re.search(r"S2 = (\S+)", value)
+		h1 = re.search(r"H1 = (\S+)", value)
+		h2 = re.search(r"H2 = (\S+)", value)
+		h3 = re.search(r"H3 = (\S+)", value)
+		h4 = re.search(r"H4 = (\S+)", value)
 		return InterfaceConfig(
 			value=value,
-			Jc=re.search(r"Jc = (\S+)", value).group(1),
-			Jmin=re.search(r"Jmin = (\S+)", value).group(1),
-			Jmax=re.search(r"Jmax = (\S+)", value).group(1),
-			S1=re.search(r"S1 = (\S+)", value).group(1),
-			S2=re.search(r"S2 = (\S+)", value).group(1),
-			H1=re.search(r"H1 = (\S+)", value).group(1),
-			H2=re.search(r"H2 = (\S+)", value).group(1),
-			H3=re.search(r"H3 = (\S+)", value).group(1),
-			H4=re.search(r"H4 = (\S+)", value).group(1))
+			Jc="0" if jc is None else jc.group(1),
+			Jmin="0" if jmin is None else jmin.group(1),
+			Jmax="0" if jmax is None else jmax.group(1),
+			S1="0" if s1 is None else s1.group(1),
+			S2="0" if s2 is None else s2.group(1),
+			H1="1" if h1 is None else h1.group(1),
+			H2="2" if h2 is None else h2.group(1),
+			H3="3" if h3 is None else h3.group(1),
+			H4="4" if h4 is None else h4.group(1))
 
 	@property
 	def interface_string(self):
 		return self.value
-	
 
 
 class PeerConfig:
