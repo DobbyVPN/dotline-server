@@ -51,6 +51,9 @@ EOF
 function awg_config {
     touch awg/wg0.conf
 
+    # System variables
+    iadapter=$(ip -4 -br a | sed '2!d' | awk '{print $1}')
+
     # Pointing boundaries 
     umask 077
     private_key=$(wg genkey)
@@ -106,13 +109,14 @@ H3 = $H3
 H4 = $H4
 
 PostUp = iptables -A FORWARD -i wg0 -j ACCEPT
-PostUp = iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+PostUp = iptables -t nat -A POSTROUTING -o $iadapter -j MASQUERADE
 PostDown = iptables -D FORWARD -i wg0 -j ACCEPT
-PostDown = iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
+PostDown = iptables -t nat -D POSTROUTING -o $iadapter -j MASQUERADE
 EOF
 
 
 cat << EOF >> ".env"
+AdapterName=${iadapter}
 ListenPort=${listen_port}
 PrivateKey=${private_key}
 Jc=${Jc}
