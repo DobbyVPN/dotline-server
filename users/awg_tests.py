@@ -73,7 +73,7 @@ class TestStringMethods(unittest.TestCase):
             self.assertEqual(new_config_lines[3], "# Name = User")
             self.assertTrue(new_config_lines[4].startswith("# PrivateKey = "))
             self.assertTrue(new_config_lines[5].startswith("PublicKey = "))
-            self.assertEqual(new_config_lines[6], "AllowedIPs = 10.0.0.1/32")
+            self.assertEqual(new_config_lines[6], "AllowedIPs = 10.0.0.2/32")
             self.assertEqual(new_config_lines[7], "")
 
         os.remove(config_path)
@@ -81,18 +81,22 @@ class TestStringMethods(unittest.TestCase):
     def test_add_config_complex_modification(self):
         config_path = "test_awg.conf"
         config_value = """[Interface]
-PrivateKey = KATMTJAoGgj4ms/+jCL9TH1KcuSeHPJbaHuoomB9V2M=
-# PublicKey = 9/FLsGmTAgP3+ViQevfh1ik9WahKj2A/kyI/XJHGN2I=
-ListenPort = 49888
-Jc = 52
-Jmin = 101
-Jmax = 202
-S1 = 32
-S2 = 44
-H1 = 1234
-H2 = 2345
-H3 = 3456
-H4 = 4567
+Address = 10.0.0.1/32
+ListenPort = 12645
+PrivateKey = AFn7srlgz+gxv7OUOPIPAFR5zCSvlFGdAWQo5/KoPnE=
+
+Jc = 49
+Jmin = 50
+Jmax = 65
+S1 = 1268
+S2 = 662
+H1 = 4976
+H2 = 20587
+H3 = 32469
+H4 = 12739
+
+PostUp = iptables -A FORWARD -i %i -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
 """
 
         with open(config_path, 'w') as temp_config:
@@ -106,22 +110,22 @@ H4 = 4567
         self.assertEqual(key_result[0], "[Interface]")
         self.assertRegex(key_result[1], r"PrivateKey = .+")
         self.assertRegex(key_result[2], r"# PublicKey = .+")
-        self.assertEqual(key_result[3], "Address = 10.0.0.1/32")
-        self.assertEqual(key_result[4], "Jc = 52")
-        self.assertEqual(key_result[5], "Jmin = 101")
-        self.assertEqual(key_result[6], "Jmax = 202")
-        self.assertEqual(key_result[7], "S1 = 32")
-        self.assertEqual(key_result[8], "S2 = 44")
-        self.assertEqual(key_result[9], "H1 = 1234")
-        self.assertEqual(key_result[10], "H2 = 2345")
-        self.assertEqual(key_result[11], "H3 = 3456")
-        self.assertEqual(key_result[12], "H4 = 4567")
+        self.assertEqual(key_result[3], "Address = 10.0.0.2/32")
+        self.assertEqual(key_result[4], "Jc = 49")
+        self.assertEqual(key_result[5], "Jmin = 50")
+        self.assertEqual(key_result[6], "Jmax = 65")
+        self.assertEqual(key_result[7], "S1 = 1268")
+        self.assertEqual(key_result[8], "S2 = 662")
+        self.assertEqual(key_result[9], "H1 = 4976")
+        self.assertEqual(key_result[10], "H2 = 20587")
+        self.assertEqual(key_result[11], "H3 = 32469")
+        self.assertEqual(key_result[12], "H4 = 12739")
         self.assertEqual(key_result[13], "")
         self.assertEqual(key_result[14], "[Peer]")
         self.assertEqual(key_result[15], "AllowedIPs = 0.0.0.0/0")
-        self.assertEqual(key_result[16], "Endpoint = <ServerHost>:<ServerPort>")
+        self.assertRegex(key_result[16], r"Endpoint = \d+.\d+.\d+.\d+:12645")
         self.assertEqual(key_result[17], "PersistentKeepalive = 60")
-        self.assertEqual(key_result[18], "PublicKey = <ServerPublicKey>")
+        self.assertEqual(key_result[18], "PublicKey = pFCNs4B01zG3ATCseJs3bPZ6m+CPq2GtfEiPVGVHFRc=")
 
         os.remove(config_path)
 
