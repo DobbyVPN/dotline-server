@@ -117,7 +117,7 @@ class InterfaceConfig:
 			private_key=None if private_key is None else private_key.group(1),
 			public_key=public_key,
 			hostname=hostname,
-			address="10.0.0.1/32" if address is None else address.group(1),
+			address="10.9.9.1/32" if address is None else address.group(1),
 			listen_port="51280" if listen_port is None else listen_port.group(1),
 			Jc="0" if jc is None else jc.group(1),
 			Jmin="0" if jmin is None else jmin.group(1),
@@ -220,7 +220,7 @@ class AmneziaWGConfig:
 		x = 1
 
 		while True:
-			address = f"10.0.0.{x}/32"
+			address = f"10.9.9.{x}/32"
 
 			if address not in map(lambda p: p.client_address, self.peers) and address != self.interface.address:
 				return address

@@ -73,7 +73,7 @@ class TestStringMethods(unittest.TestCase):
             self.assertEqual(new_config_lines[3], "# Name = User")
             self.assertTrue(new_config_lines[4].startswith("# PrivateKey = "))
             self.assertTrue(new_config_lines[5].startswith("PublicKey = "))
-            self.assertEqual(new_config_lines[6], "AllowedIPs = 10.0.0.2/32")
+            self.assertEqual(new_config_lines[6], "AllowedIPs = 10.9.9.2/32")
             self.assertEqual(new_config_lines[7], "")
 
         os.remove(config_path)
@@ -81,7 +81,7 @@ class TestStringMethods(unittest.TestCase):
     def test_add_config_complex_modification(self):
         config_path = "test_awg.conf"
         config_value = """[Interface]
-Address = 10.0.0.1/32
+Address = 10.9.9.1/32
 ListenPort = 12645
 PrivateKey = AFn7srlgz+gxv7OUOPIPAFR5zCSvlFGdAWQo5/KoPnE=
 
@@ -110,7 +110,7 @@ PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -t nat -D POSTROUTING -
         self.assertEqual(key_result[0], "[Interface]")
         self.assertRegex(key_result[1], r"PrivateKey = .+")
         self.assertRegex(key_result[2], r"# PublicKey = .+")
-        self.assertEqual(key_result[3], "Address = 10.0.0.2/32")
+        self.assertEqual(key_result[3], "Address = 10.9.9.2/32")
         self.assertEqual(key_result[4], "Jc = 49")
         self.assertEqual(key_result[5], "Jmin = 50")
         self.assertEqual(key_result[6], "Jmax = 65")
