@@ -91,7 +91,7 @@ done
 
 cat <<EOF > awg/wg0.conf
 [Interface]
-Address = 10.0.0.1/24
+Address = 10.0.0.1/32
 ListenPort = $listen_port
 PrivateKey = $private_key
 
