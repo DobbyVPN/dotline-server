@@ -52,6 +52,9 @@ function awg_config {
     touch awg/wg0.conf
 
     # Pointing boundaries 
+    umask 077
+    private_key=$(wg genkey)
+    listen_port=$(shuf -i 1025-32875 -n 1)
     Jc_min=1
     Jc_max=128
     Jmin_recommended=50
@@ -89,8 +92,8 @@ done
 cat <<EOF > awg/wg0.conf
 [Interface]
 Address = 10.0.0.1/24
-ListenPort = 51820
-PrivateKey = 
+ListenPort = $listen_port
+PrivateKey = $private_key
 
 Jc = $Jc
 Jmin = $Jmin
@@ -108,6 +111,8 @@ EOF
 
 
 cat << EOF >> ".env"
+ListenPort=${listen_port}
+PrivateKey=${private_key}
 Jc=${Jc}
 Jmin=${Jmin}
 Jmax=${Jmax}
