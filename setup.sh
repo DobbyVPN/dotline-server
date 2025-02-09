@@ -51,7 +51,13 @@ EOF
 function awg_config {
     touch awg/wg0.conf
 
+    # System variables
+    iadapter=$(ip -4 -br a | sed '2!d' | awk '{print $1}')
+
     # Pointing boundaries 
+    umask 077
+    private_key=$(wg genkey)
+    listen_port=$(shuf -i 1025-32875 -n 1)
     Jc_min=1
     Jc_max=128
     Jmin_recommended=50
@@ -88,9 +94,9 @@ done
 
 cat <<EOF > awg/wg0.conf
 [Interface]
-Address = 10.0.0.1/24
-ListenPort = 51820
-PrivateKey = 
+PrivateKey = $private_key
+ListenPort = $listen_port
+Address = 10.9.9.1/32
 
 Jc = $Jc
 Jmin = $Jmin
@@ -102,12 +108,17 @@ H2 = $H2
 H3 = $H3
 H4 = $H4
 
-PostUp = iptables -A FORWARD -i %i -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
-PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
+PostUp = iptables -A FORWARD -i wg0 -j ACCEPT
+PostUp = iptables -t nat -A POSTROUTING -o $iadapter -j MASQUERADE
+PostDown = iptables -D FORWARD -i wg0 -j ACCEPT
+PostDown = iptables -t nat -D POSTROUTING -o $iadapter -j MASQUERADE
 EOF
 
 
 cat << EOF >> ".env"
+AdapterName=${iadapter}
+ListenPort=${listen_port}
+PrivateKey=${private_key}
 Jc=${Jc}
 Jmin=${Jmin}
 Jmax=${Jmax}

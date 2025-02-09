@@ -1,7 +1,15 @@
 import re
+import json
+import base64
+import codecs
+
+from python_wireguard import Key
+from urllib.request import urlopen
+from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+from cryptography.hazmat.primitives import serialization
 
 from typing import List, Optional
-from python_wireguard import Key
+
 
 SERVER_CONFIG_PATTERN = """[Peer]
 # Name = <Name>
@@ -9,6 +17,7 @@ SERVER_CONFIG_PATTERN = """[Peer]
 PublicKey = <ClientPublicKey>
 AllowedIPs = <ClientAddress>
 """
+
 
 CLIENT_CONFIG_PATTERN = """[Interface]
 PrivateKey = <ClientPrivateKey>
@@ -33,8 +42,29 @@ PublicKey = <ServerPublicKey>
 
 
 class InterfaceConfig:
-	def __init__(self, value: str, Jc: str, Jmin: str, Jmax: str, S1: str, S2: str, H1: str, H2: str, H3: str, H4: str):
+	def __init__(
+			self,
+			value: str,
+			private_key: Optional[str],
+			public_key: Optional[str],
+			hostname: str,
+			address: str,
+			listen_port: str,
+			Jc: str,
+			Jmin: str,
+			Jmax: str,
+			S1: str,
+			S2: str,
+			H1: str,
+			H2: str,
+			H3: str,
+			H4: str):
 		self.value = value
+		self.private_key = private_key
+		self.public_key = public_key
+		self.hostname = hostname
+		self.address = address
+		self.listen_port = listen_port
 		self.Jc = Jc
 		self.Jmin = Jmin
 		self.Jmax = Jmax
@@ -47,6 +77,31 @@ class InterfaceConfig:
 
 	@staticmethod
 	def from_string(value: str):
+		private_key = re.search(r"PrivateKey = (\S+)", value)
+
+		if private_key is None:
+			public_key = None
+		else:
+			try:
+				private_key_value = private_key.group(1)
+				private_key_data = base64.b64decode(private_key_value)
+				private_key_x25519 = X25519PrivateKey.from_private_bytes(private_key_data)
+				public_key_x25519 = private_key_x25519 \
+					.public_key() \
+					.public_bytes(
+						encoding=serialization.Encoding.Raw,
+						format=serialization.PublicFormat.Raw)
+				public_key = codecs.encode(public_key_x25519, 'base64').decode('utf8').strip()
+			except Exception:
+				public_key = None
+
+		url = 'http://ipinfo.io/json'
+		response = urlopen(url)
+		data = json.load(response)
+		hostname = data['ip']
+
+		address = re.search(r"Address = (\S+)", value)
+		listen_port = re.search(r"ListenPort = (\S+)", value)
 		jc = re.search(r"Jc = (\S+)", value)
 		jmin = re.search(r"Jmin = (\S+)", value)
 		jmax = re.search(r"Jmax = (\S+)", value)
@@ -56,8 +111,14 @@ class InterfaceConfig:
 		h2 = re.search(r"H2 = (\S+)", value)
 		h3 = re.search(r"H3 = (\S+)", value)
 		h4 = re.search(r"H4 = (\S+)", value)
+
 		return InterfaceConfig(
 			value=value,
+			private_key=None if private_key is None else private_key.group(1),
+			public_key=public_key,
+			hostname=hostname,
+			address="10.9.9.1/32" if address is None else address.group(1),
+			listen_port="51280" if listen_port is None else listen_port.group(1),
 			Jc="0" if jc is None else jc.group(1),
 			Jmin="0" if jmin is None else jmin.group(1),
 			Jmax="0" if jmax is None else jmax.group(1),
@@ -100,6 +161,9 @@ class PeerConfig:
 			.replace("<ClientPrivateKey>", self.client_private) \
 			.replace("<ClientPublicKey>", self.client_public) \
 			.replace("<ClientAddress>", self.client_address) \
+			.replace("<ServerPublicKey>", interface_config.public_key if interface_config.public_key is not None else "") \
+			.replace("<ServerHost>", interface_config.hostname) \
+			.replace("<ServerPort>", interface_config.listen_port) \
 			.replace("<Jc>", interface_config.Jc) \
 			.replace("<Jmin>", interface_config.Jmin) \
 			.replace("<Jmax>", interface_config.Jmax) \
@@ -142,9 +206,8 @@ class AmneziaWGConfig:
 					peer_read = True
 					current_value = ""
 				
-				if stripped != "":
-					current_value += stripped
-					current_value += "\n"
+				current_value += stripped
+				current_value += "\n"
 
 		if interface_read and current_value != "":
 			interface_config = InterfaceConfig.from_string(current_value)
@@ -157,9 +220,9 @@ class AmneziaWGConfig:
 		x = 1
 
 		while True:
-			address = f"10.0.0.{x}/32"
+			address = f"10.9.9.{x}/32"
 
-			if address not in map(lambda p: p.client_address, self.peers):
+			if address not in map(lambda p: p.client_address, self.peers) and address != self.interface.address:
 				return address
 			else:
 				x += 1
