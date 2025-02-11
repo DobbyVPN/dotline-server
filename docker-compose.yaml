@@ -64,7 +64,7 @@ services:
       - NET_ADMIN
     network_mode: "bridge"
     ports:
-      - "51820:51820/udp"
+      - "${AWG_LISTEN_PORT-51280}:${AWG_LISTEN_PORT-51280}/udp"
     volumes:
       - /lib/modules:/lib/modules
       - ${PWD}/awg:/etc/amnezia/amneziawg
