@@ -1,0 +1,3 @@
+python-decouple==3.8
+python-wireguard==0.2.2
+cryptography==44.0.1

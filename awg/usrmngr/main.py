@@ -4,7 +4,7 @@ import json
 import decouple
 
 from typing import List, Optional
-from awg.awg import InterfaceConfig, PeerConfig, AmneziaWGConfig
+from awg import InterfaceConfig, PeerConfig, AmneziaWGConfig
 
 
 DEFAULT_AWG_CONFIG_PATH = "wg0.conf"

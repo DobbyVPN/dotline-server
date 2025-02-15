@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# Install dependencies
+echo "[$(date)] Install dependencies" >> awg.log
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install --upgrade pip
+
+python3 --version >> awg.log
+python3 -m pip --version >> awg.log
+python3 -m pip install -r requirements.txt >> awg.log
+
+deactivate
+
+# Config generation
+echo "[$(date)] Generate config" >> awg.log
+
 # Config generation constants:
 Jc_min=1
 Jc_max=128
