@@ -1,3 +1,2 @@
 outline-vpn-api==6.3.0
 python-decouple==3.8
-python-wireguard==0.2.2
