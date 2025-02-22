@@ -35,6 +35,38 @@ cd DobbyVPN-server
 
 </details>
 
+## Outline
+
+### VPN docker image local build
+
+```bash
+cp docker/Dockerfile-shadowbox-embedded Dockerfile
+docker build --no-cache -f Dockerfile -t shadowbox-embedded:latest .
+```
+
+It builds local `shadowbox-embedded` image, that can be used in the [docker-compose.yaml](./docker-compose.yaml) file, for example.
+This image is a simple [Outline Shadowbox](https://github.com/Jigsaw-Code/outline-server/blob/master/src/shadowbox/README.md) with our custom python scripts for the user management.
+
+### VPN management
+
+#### List keys:
+
+```bash
+docker exec shadowbox-embedded .venv/bin/python3 usrmngr/main.py list
+```
+
+#### Add key to user:
+
+```bash
+docker exec shadowbox-embedded .venv/bin/python3 usrmngr/main.py add <User>
+```
+
+#### Delete user keys:
+
+```bash
+docker exec shadowbox-embedded .venv/bin/python3 usrmngr/main.py del <User>
+```
+
 ## AWG
 
 ### VPN docker image local build

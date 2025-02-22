@@ -36,8 +36,8 @@ services:
     restart: unless-stopped
 
   shadowbox:
-    image: quay.io/outline/shadowbox:stable
-    container_name: shadowbox
+    image: shadowbox-embedded:latest
+    container_name: shadowbox-embedded
     profiles: ["outline"]
     networks:
       - caddy_cloak_ss_network
@@ -53,6 +53,7 @@ services:
       com.centurylinklabs.watchtower.enable: "true"
     volumes:
       - /opt/outline/persisted-state:/opt/outline/persisted-state
+      - ${PWD}/.env:/opt/outline-server/.env
     restart: unless-stopped
 
   awg-server:
