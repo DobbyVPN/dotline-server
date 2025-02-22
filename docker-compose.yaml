@@ -36,7 +36,7 @@ services:
     restart: unless-stopped
 
   shadowbox:
-    image: outline-server:latest
+    image: ghcr.io/dobbyvpn/dobbyvpn-server/outline-server:v0.3
     container_name: outline-server
     profiles: ["outline"]
     networks:
