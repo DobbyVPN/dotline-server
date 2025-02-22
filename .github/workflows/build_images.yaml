@@ -101,7 +101,7 @@ jobs:
           docker push "$IMAGE_NAME" --all-tags
       
             
-  build-and-push-outline-server:
+  build-and-push-outline:
     runs-on: ubuntu-latest
 
     steps:
@@ -110,9 +110,10 @@ jobs:
 
       - name: Setting Outline version
         run: |
-          OUTLINE_SERVER_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1)).${{ github.run_number }}
-          echo "OUTLINE_SERVER_VERSION=$OUTLINE_SERVER_VERSION"
-          echo "OUTLINE_SERVER_VERSION=$OUTLINE_SERVER_VERSION" >> $GITHUB_ENV
+          cp docker/Dockerfile-outline-server Dockerfile
+          OUTLINE_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1)).${{ github.run_number }}
+          echo "OUTLINE_VERSION=$OUTLINE_VERSION"
+          echo "OUTLINE_VERSION=$OUTLINE_VERSION" >> $GITHUB_ENV
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -129,14 +130,12 @@ jobs:
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
           IMAGE_NAME="ghcr.io/$OWNER/$REPO/outline-server"
-          VERSION=${{ env.OUTLINE_SERVER_VERSION }}
+          VERSION=${{ env.OUTLINE_VERSION }}
           IFS='.' read -r A B C D <<< "${VERSION#v}"
           VA="v$A"
           VB="v$A.$B"
           VC="v$A.$B.$C"
           VD="v$A.$B.$C.$D"
-
-          cp docker/Dockerfile-outline-server Dockerfile
           docker build -f Dockerfile -t "$IMAGE_NAME:$VA" -t "$IMAGE_NAME:$VB" -t "$IMAGE_NAME:$VC" -t "$IMAGE_NAME:$VD" -t "$IMAGE_NAME:latest" .
           docker push "$IMAGE_NAME" --all-tags
 
