@@ -65,9 +65,9 @@ services:
       - NET_ADMIN
     network_mode: "bridge"
     ports:
-      - "${AWG_LISTEN_PORT}:${AWG_LISTEN_PORT}/udp"
+      - "${AWG_LISTEN_PORT:-51280}:${AWG_LISTEN_PORT:-51280}/udp"
     environment:
-      - AWG_LISTEN_PORT=${AWG_LISTEN_PORT}
+      - AWG_LISTEN_PORT=${AWG_LISTEN_PORT:-51280}
     volumes:
       - /lib/modules:/lib/modules
       - ${PWD}/awg:/etc/amnezia/amneziawg
