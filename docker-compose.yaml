@@ -36,8 +36,8 @@ services:
     restart: unless-stopped
 
   shadowbox:
-    image: shadowbox-embedded:latest
-    container_name: shadowbox-embedded
+    image: outline-server:latest
+    container_name: outline-server
     profiles: ["outline"]
     networks:
       - caddy_cloak_ss_network
