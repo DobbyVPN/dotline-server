@@ -36,8 +36,8 @@ services:
     restart: unless-stopped
 
   shadowbox:
-    image: quay.io/outline/shadowbox:stable
-    container_name: shadowbox
+    image: outline-server:latest
+    container_name: outline-server
     profiles: ["outline"]
     networks:
       - caddy_cloak_ss_network
@@ -53,6 +53,7 @@ services:
       com.centurylinklabs.watchtower.enable: "true"
     volumes:
       - /opt/outline/persisted-state:/opt/outline/persisted-state
+      - ${PWD}/.env:/opt/outline-server/.env
     restart: unless-stopped
 
   awg-server:
@@ -64,9 +65,9 @@ services:
       - NET_ADMIN
     network_mode: "bridge"
     ports:
-      - "${AWG_LISTEN_PORT}:${AWG_LISTEN_PORT}/udp"
+      - "${AWG_LISTEN_PORT:-51280}:${AWG_LISTEN_PORT:-51280}/udp"
     environment:
-      - AWG_LISTEN_PORT=${AWG_LISTEN_PORT}
+      - AWG_LISTEN_PORT=${AWG_LISTEN_PORT:-51280}
     volumes:
       - /lib/modules:/lib/modules
       - ${PWD}/awg:/etc/amnezia/amneziawg
