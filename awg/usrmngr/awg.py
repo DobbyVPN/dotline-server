@@ -16,9 +16,12 @@ AllowedIPs = <ClientAddress>
 
 
 CLIENT_CONFIG_PATTERN = """[Interface]
+# Name = <Name>
 PrivateKey = <ClientPrivateKey>
 # PublicKey = <ClientPublicKey>
 Address = <ClientAddress>
+DNS = 8.8.8.8
+MTU = 1420
 Jc = <Jc>
 Jmin = <Jmin>
 Jmax = <Jmax>
@@ -151,6 +154,7 @@ class PeerConfig:
 
 	def client_config(self, interface_config: InterfaceConfig):
 		return CLIENT_CONFIG_PATTERN \
+			.replace("<Name>", self.name) \
 			.replace("<ClientPrivateKey>", self.client_private) \
 			.replace("<ClientPublicKey>", self.client_public) \
 			.replace("<ClientAddress>", self.client_address) \

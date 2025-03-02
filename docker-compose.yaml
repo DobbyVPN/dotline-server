@@ -57,7 +57,7 @@ services:
     restart: unless-stopped
 
   awg-server:
-    image: ghcr.io/dobbyvpn/dobbyvpn-server/awg-server:v0.2
+    image: awg-server:latest
     container_name: awg-server
     profiles: ["awg"]
     cap_add:
@@ -70,7 +70,6 @@ services:
       - AWG_LISTEN_PORT=${AWG_LISTEN_PORT:-51280}
     volumes:
       - /lib/modules:/lib/modules
-      - ${PWD}/awg:/etc/amnezia/amneziawg
     labels:
       com.centurylinklabs.watchtower.enable: "true"
     devices:
