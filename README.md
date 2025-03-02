@@ -1,5 +1,7 @@
 # Dobby VPN server
 
+Run VPN server on the machine.
+
 ## Setup:
 
 ```bash
@@ -7,6 +9,12 @@ git clone https://github.com/DobbyVPN/DobbyVPN-server.git
 cd DobbyVPN-server
 ./setup.sh
 ```
+
+## Documentation
+
+* [How to run AmneziaWG server](./docs/AWG_VPS_SERVER_RUN.md)
+* [Additional docker images](./docs/DOCKER_IMAGES.md)
+* [User keys management](./docs/USER_MANAGEMENT_SCRIPTS.md)
 
 ## Cloak
 
@@ -35,78 +43,7 @@ cd DobbyVPN-server
 
 </details>
 
-## Outline
-
-### VPN docker image local build
-
-```bash
-cp docker/Dockerfile-outline-server Dockerfile
-docker build --no-cache -f Dockerfile -t outline-server:latest .
-```
-
-It builds local `outline-server` image, that can be used in the [docker-compose.yaml](./docker-compose.yaml) file, for example.
-This image is a simple [Outline Shadowbox](https://github.com/Jigsaw-Code/outline-server/blob/master/src/shadowbox/README.md) with our custom python scripts for the user management.
-
-### VPN management
-
-#### List keys:
-
-```bash
-docker exec outline-server .venv/bin/python3 usrmngr/main.py list
-```
-
-#### Add key to user:
-
-```bash
-docker exec outline-server .venv/bin/python3 usrmngr/main.py add <User>
-```
-
-#### Delete user keys:
-
-```bash
-docker exec outline-server .venv/bin/python3 usrmngr/main.py del <User>
-```
-
 ## AWG
-
-### VPN docker image local build
-
-```bash
-git clone https://github.com/amnezia-vpn/amneziawg-go
-cd amneziawg-go
-rm Dockerfile
-cp ../docker/Dockerfile-awg-server Dockerfile
-docker build --no-cache -f Dockerfile -t awg-server:latest .
-cd ../
-```
-
-It builds local `awg-server` image, that can be used in the [docker-compose.yaml](./docker-compose.yaml) file, for example.
-
-### VPN management
-
-#### List keys:
-
-```bash
-docker exec awg-server .venv/bin/python3 usrmngr/main.py list
-```
-
-#### Add key to user:
-
-```bash
-docker exec awg-server .venv/bin/python3 usrmngr/main.py list add <User>
-```
-
-#### Delete user keys:
-
-```bash
-docker exec awg-server .venv/bin/python3 usrmngr/main.py list del <User>
-```
-
-#### Get server log:
-
-```bash
-docker exec awg-server cat awg.log
-```
 
 ### Config modifications:
 
@@ -140,6 +77,7 @@ PostUp = iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 PostDown = iptables -D FORWARD -i wg0 -j ACCEPT
 PostDown = iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
 ```
+
 AWG specific params (Jc, Jmin, Jmax, S1, S2, H1, H2, H3, H4) are located in `.env` file.
 
 Environment variables are stored in `.env` file, all log information in `logs.txt` file.
