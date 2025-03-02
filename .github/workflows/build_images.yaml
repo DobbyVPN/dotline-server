@@ -59,13 +59,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Setting AWG version
         run: |
-          git clone https://github.com/amnezia-vpn/amneziawg-go
-          cd amneziawg-go
-          rm Dockerfile
-          cp ../docker/Dockerfile-awg-server Dockerfile
+          cp docker/Dockerfile-awg-server Dockerfile
           AWG_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1)).${{ github.run_number }}
           echo "AWG_VERSION=$AWG_VERSION"
           echo "AWG_VERSION=$AWG_VERSION" >> $GITHUB_ENV
@@ -80,14 +79,8 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '>=1.18.1'
-
       - name: Build and Publish Docker AWG image
         run: |
-          cd amneziawg-go
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
           IMAGE_NAME="ghcr.io/$OWNER/$REPO/awg-server"
