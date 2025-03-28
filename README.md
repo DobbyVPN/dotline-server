@@ -16,6 +16,12 @@ cd DobbyVPN-server
 * [Additional docker images](./docs/DOCKER_IMAGES.md)
 * [User keys management](./docs/USER_MANAGEMENT_SCRIPTS.md)
 
+## Outline
+
+You will be asked to enter a domain name.
+
+A domain name must be purchased in advance and assigned to your server's IP address.
+
 ## Cloak
 
 <details>
