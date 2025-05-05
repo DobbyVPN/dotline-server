@@ -22,6 +22,12 @@ if ! command -v docker &> /dev/null; then
     wget -O - https://get.docker.com | sudo bash 
 fi
 
+# Removing watchtower - not a problem if it was installed by Outline
+if docker ps -a --format '{{.Names}}' | grep -q "^watchtower$"; then
+    docker stop watchtower
+    docker rm watchtower
+fi
+
 # Get user defined variables
 read -p "Enter 'face' domain name: " DOMAIN_NAME
 read -p "Enter Outline's IP & port (as 'IP:port'): " OUTLINE_IP_PORT
@@ -51,6 +57,8 @@ envsubst < cloak-server_template.conf > cloak-server.conf
 docker compose up -d
 
 echo "Client's config values:"
+CLOAK_USER_UID=$(grep -E '^CLOAK_USER_UID=' .env | cut -d '=' -f2-)
 echo '"UID": "'$CLOAK_USER_UID'"'
+CLOAK_PUBLIC_KEY=$(grep -E '^CLOAK_PUBLIC_KEY=' .env | cut -d '=' -f2-)
 echo '"PublicKey": "'$CLOAK_PUBLIC_KEY'"'
 echo '"ServerName": "'$DOMAIN_NAME'"'
