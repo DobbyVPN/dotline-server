@@ -39,7 +39,7 @@ jobs:
         run: |
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
-          IMAGE_NAME="ghcr.io/$OWNER/$REPO/dotline-server"
+          IMAGE_NAME="ghcr.io/$OWNER/$REPO/cloak-server"
           VERSION=${{ env.CLOAK_VERSION }}
           IFS='.' read -r A B C D <<< "${VERSION#v}"
           VA="v$A"
