@@ -1,8 +1,5 @@
-{
-   log
-}
-
 {$DOMAIN_NAME} {
+    log
     @cloakPath {
         path /{$CLOAK_SECRET_URL}
     }

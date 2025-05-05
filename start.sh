@@ -29,10 +29,10 @@ if docker ps -a --format '{{.Names}}' | grep -q "^watchtower$"; then
 fi
 
 # Get user defined variables
-read -p "Enter 'face' domain name: " DOMAIN_NAME
-read -p "Enter Outline's IP & port (as 'IP:port'): " OUTLINE_IP_PORT
+read -p "DNS name of the site: " DOMAIN_NAME
+read -p "Outline's IP & port for Cloak ('IP:port'): " OUTLINE_IP_PORT
 
-touch .env # to avoid getting it created as a folder
+touch .env cloak-server.conf  Caddyfile # to keep them as a files during first Docker start
 
 # Configuring Cloak server
 docker run --rm -v $(pwd)/.env:/.env ghcr.io/dobbyvpn/dobbyvpn-server/cloak-server:v2 sh -c \
@@ -53,6 +53,7 @@ OUTLINE_IP_PORT=${OUTLINE_IP_PORT}
 EOF
 
 envsubst < cloak-server_template.conf > cloak-server.conf
+envsubst < Caddyfile_template > Caddyfile
 
 docker compose up -d
 
@@ -62,3 +63,5 @@ echo '"UID": "'$CLOAK_USER_UID'"'
 CLOAK_PUBLIC_KEY=$(grep -E '^CLOAK_PUBLIC_KEY=' .env | cut -d '=' -f2-)
 echo '"PublicKey": "'$CLOAK_PUBLIC_KEY'"'
 echo '"ServerName": "'$DOMAIN_NAME'"'
+echo
+echo '(do `docker compose down` to remove)'
