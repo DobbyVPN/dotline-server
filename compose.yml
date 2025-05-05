@@ -12,7 +12,7 @@ services:
       - ./caddy_static:/caddy_static
 
   cloak-server:
-    image: ghcr.io/dobbyvpn/dobbyvpn-server/dotline-server:v2
+    image: ghcr.io/dobbyvpn/dobbyvpn-server/cloak-server:v2
     container_name: cloak_server
     network_mode: "host"
     restart: unless-stopped

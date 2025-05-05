@@ -14,7 +14,6 @@ current_cc=$(sysctl -n net.ipv4.tcp_congestion_control)
 if [ "$current_cc" != "bbr" ]; then
     echo 'net.core.default_qdisc=fq' > /etc/sysctl.d/10-custom-kernel-bbr.conf
     echo 'net.ipv4.tcp_congestion_control=bbr' >> /etc/sysctl.d/10-custom-kernel-bbr.conf
-EOF
     service procps force-reload
 fi
 
