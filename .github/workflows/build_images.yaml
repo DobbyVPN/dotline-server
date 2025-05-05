@@ -46,7 +46,6 @@ jobs:
           VB="v$A.$B"
           VC="v$A.$B.$C"
           VD="v$A.$B.$C.$D"
-          cd docker
           docker build -f Dockerfile -t "$IMAGE_NAME:$VA" -t "$IMAGE_NAME:$VB" -t "$IMAGE_NAME:$VC" -t "$IMAGE_NAME:$VD" -t "$IMAGE_NAME:latest" .
           docker push "$IMAGE_NAME" --all-tags
       
