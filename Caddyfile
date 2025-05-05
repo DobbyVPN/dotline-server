@@ -1,0 +1,18 @@
+{
+   log
+}
+
+{$DOMAIN_NAME} {
+    @cloakPath {
+        path /{$CLOAK_SECRET_URL}
+    }
+    
+    handle @cloakPath {
+        reverse_proxy @cloakPath 127.0.0.1:8443
+    }
+
+    handle {
+        # reverse_proxy local_server:8008
+        file_server /caddy_static/*
+    }
+}

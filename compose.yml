@@ -1,0 +1,34 @@
+services:
+
+  caddy_outline:
+    image: caddy:2
+    container_name: caddy_for_cloak
+    network_mode: "host"
+    restart: unless-stopped
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile  
+      - ./caddy/data:/data
+      - ./caddy/config:/config
+      - .caddy_static:/caddy_static
+
+  cloak-server:
+    image: ghcr.io/dobbyvpn/dobbyvpn-server/cloak-server:v2
+    container_name: cloak_server
+    network_mode: "host"
+    restart: unless-stopped
+    volumes:
+      - ./cloak-server.conf:/cloak-server.conf
+    entrypoint: |
+      sh -c "exec /app/ck-server -c /cloak-server.conf"
+
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    restart: unless-stopped
+    environment:
+      WATCHTOWER_SCHEDULE: 0 35 3 * * *
+      TZ: Europe/Berlin
+      WATCHTOWER_CLEANUP: "true"
+      WATCHTOWER_DEBUG: "true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
