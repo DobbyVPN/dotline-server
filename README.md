@@ -3,7 +3,7 @@
 ## Setup:
 
 ```bash
-git clone https://github.com/DobbyVPN/DobbyVPN-server.git
-cd DobbyVPN-server
+git clone https://github.com/DobbyVPN/dotline-server.git
+cd dotline-server
 ./setup.sh
 ```
