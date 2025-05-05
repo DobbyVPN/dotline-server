@@ -17,4 +17,4 @@ RUN apk upgrade --no-cache && \
 WORKDIR /app
 COPY --from=build /opt/Cloak/build/ck-server /app/ck-server
 
-LABEL org.opencontainers.image.source=https://github.com/DobbyVPN/dobbyvpn-server
+LABEL org.opencontainers.image.source=https://github.com/DobbyVPN/dotline-server

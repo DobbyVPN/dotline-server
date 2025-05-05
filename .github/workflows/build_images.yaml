@@ -9,7 +9,6 @@ on:
     branches:
       - main
   
-
 jobs:
   build-and-push-cloak:
     runs-on: ubuntu-latest
@@ -36,12 +35,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-
       - name: Build and Publish Docker Cloak image
         run: |
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
-          IMAGE_NAME="ghcr.io/$OWNER/$REPO/cloak-server"
+          IMAGE_NAME="ghcr.io/$OWNER/$REPO/dotline-server"
           VERSION=${{ env.CLOAK_VERSION }}
           IFS='.' read -r A B C D <<< "${VERSION#v}"
           VA="v$A"
@@ -49,89 +47,6 @@ jobs:
           VC="v$A.$B.$C"
           VD="v$A.$B.$C.$D"
           cd docker
-          docker build -f Dockerfile-cloak-server -t "$IMAGE_NAME:$VA" -t "$IMAGE_NAME:$VB" -t "$IMAGE_NAME:$VC" -t "$IMAGE_NAME:$VD" -t "$IMAGE_NAME:latest" .
-          docker push "$IMAGE_NAME" --all-tags
-      
-            
-  build-and-push-awg:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Setting AWG version
-        run: |
-          cp docker/Dockerfile-awg-server Dockerfile
-          AWG_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1)).${{ github.run_number }}
-          echo "AWG_VERSION=$AWG_VERSION"
-          echo "AWG_VERSION=$AWG_VERSION" >> $GITHUB_ENV
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Build and Publish Docker AWG image
-        run: |
-          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
-          IMAGE_NAME="ghcr.io/$OWNER/$REPO/awg-server"
-          VERSION=${{ env.AWG_VERSION }}
-          IFS='.' read -r A B C D <<< "${VERSION#v}"
-          VA="v$A"
-          VB="v$A.$B"
-          VC="v$A.$B.$C"
-          VD="v$A.$B.$C.$D"
           docker build -f Dockerfile -t "$IMAGE_NAME:$VA" -t "$IMAGE_NAME:$VB" -t "$IMAGE_NAME:$VC" -t "$IMAGE_NAME:$VD" -t "$IMAGE_NAME:latest" .
           docker push "$IMAGE_NAME" --all-tags
       
-            
-  build-and-push-outline:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Setting Outline version
-        run: |
-          cp docker/Dockerfile-outline-server Dockerfile
-          OUTLINE_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1)).${{ github.run_number }}
-          echo "OUTLINE_VERSION=$OUTLINE_VERSION"
-          echo "OUTLINE_VERSION=$OUTLINE_VERSION" >> $GITHUB_ENV
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Build and Publish Docker Outline image
-        run: |
-          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
-          IMAGE_NAME="ghcr.io/$OWNER/$REPO/outline-server"
-          VERSION=${{ env.OUTLINE_VERSION }}
-          IFS='.' read -r A B C D <<< "${VERSION#v}"
-          VA="v$A"
-          VB="v$A.$B"
-          VC="v$A.$B.$C"
-          VD="v$A.$B.$C.$D"
-          docker build -f Dockerfile -t "$IMAGE_NAME:$VA" -t "$IMAGE_NAME:$VB" -t "$IMAGE_NAME:$VC" -t "$IMAGE_NAME:$VD" -t "$IMAGE_NAME:latest" .
-          docker push "$IMAGE_NAME" --all-tags
-
-
