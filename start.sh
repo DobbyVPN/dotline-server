@@ -24,6 +24,7 @@ fi
 
 # Removing watchtower - not a problem if it was installed by Outline
 if docker ps -a --format '{{.Names}}' | grep -q "^watchtower$"; then
+    echo 'Watchtower detected, removing.'
     docker stop watchtower
     docker rm watchtower
 fi
@@ -52,15 +53,14 @@ DOMAIN_NAME=${DOMAIN_NAME}
 OUTLINE_IP_PORT=${OUTLINE_IP_PORT}
 EOF
 
+export $(cat .env | xargs)
 envsubst < cloak-server_template.conf > cloak-server.conf
 envsubst < Caddyfile_template > Caddyfile
 
 docker compose up -d
 
 echo "Client's config values:"
-CLOAK_USER_UID=$(grep -E '^CLOAK_USER_UID=' .env | cut -d '=' -f2-)
 echo '"UID": "'$CLOAK_USER_UID'"'
-CLOAK_PUBLIC_KEY=$(grep -E '^CLOAK_PUBLIC_KEY=' .env | cut -d '=' -f2-)
 echo '"PublicKey": "'$CLOAK_PUBLIC_KEY'"'
 echo '"ServerName": "'$DOMAIN_NAME'"'
 echo
