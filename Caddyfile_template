@@ -1,7 +1,7 @@
 ${DOMAIN_NAME} {
     log
     @cloakPath {
-        path /${$CLOAK_SECRET_URL}
+        path /${CLOAK_SECRET_URL}
     }
     
     handle @cloakPath {
@@ -10,6 +10,6 @@ ${DOMAIN_NAME} {
 
     handle {
         # reverse_proxy local_server:8008
-        file_server /caddy_static/*
-    }
+        root * /caddy_static
+        file_server
 }

@@ -2,7 +2,7 @@ services:
 
   caddy_outline:
     image: caddy:2
-    container_name: caddy_for_cloak
+    container_name: caddy_outline
     network_mode: "host"
     restart: unless-stopped
     volumes:
