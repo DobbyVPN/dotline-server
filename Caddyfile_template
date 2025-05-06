@@ -1,7 +1,7 @@
-{$DOMAIN_NAME} {
+${DOMAIN_NAME} {
     log
     @cloakPath {
-        path /{$CLOAK_SECRET_URL}
+        path /${$CLOAK_SECRET_URL}
     }
     
     handle @cloakPath {

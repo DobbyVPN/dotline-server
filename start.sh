@@ -5,6 +5,7 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
+touch .env cloak-server.conf  Caddyfile # to keep them as a files during first Docker start
 mkdir -p caddy/config caddy/data
 apt install -y gettext jq
 
@@ -33,8 +34,6 @@ fi
 read -p "DNS name of the site: " DOMAIN_NAME
 read -p "Outline's IP & port for Cloak ('IP:port'): " OUTLINE_IP_PORT
 
-touch .env cloak-server.conf  Caddyfile # to keep them as a files during first Docker start
-
 # Configuring Cloak server
 docker run --rm -v $(pwd)/.env:/.env ghcr.io/dobbyvpn/dobbyvpn-server/cloak-server:v2 sh -c \
 "KEYPAIRS=\$(/app/ck-server -key)
@@ -59,9 +58,11 @@ envsubst < Caddyfile_template > Caddyfile
 
 docker compose up -d
 
+echo
 echo "Client's config values:"
 echo '"UID": "'$CLOAK_USER_UID'"'
 echo '"PublicKey": "'$CLOAK_PUBLIC_KEY'"'
 echo '"ServerName": "'$DOMAIN_NAME'"'
 echo
-echo '(do `docker compose down` to remove)'
+echo 'To remove: `docker compose down && rm .env Caddyfile cloak-server.conf`'
+echo
