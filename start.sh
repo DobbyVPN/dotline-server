@@ -63,6 +63,7 @@ echo "Client's config values:"
 echo '"UID": "'$CLOAK_USER_UID'"'
 echo '"PublicKey": "'$CLOAK_PUBLIC_KEY'"'
 echo '"ServerName": "'$DOMAIN_NAME'"'
+echo '"Cloak secret URL": "'$CLOAK_SECRET_URL'"'
 echo
 echo 'To remove: `docker compose down && rm .env Caddyfile cloak-server.conf`'
 echo
