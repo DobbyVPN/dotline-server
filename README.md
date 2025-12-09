@@ -5,9 +5,9 @@ Dotline — your traffic, masked as HTTPS.
 ## Setup:
 
 ```bash
+sudo apt install -y git
 git clone https://github.com/DobbyVPN/dotline-server.git
-cd dotline-server
-./setup.sh
+cd dotline-server && ./start.sh
 ```
 
 ## Update:
