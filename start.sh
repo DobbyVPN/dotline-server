@@ -35,7 +35,7 @@ read -p "DNS name of the site: " DOMAIN_NAME
 read -p "Outline's IP & port for Cloak ('IP:port'): " OUTLINE_IP_PORT
 
 # Configuring Cloak server
-docker run --rm -v $(pwd)/.env:/.env ghcr.io/dobbyvpn/dobbyvpn-server/cloak-server:v2 sh -c \
+docker run --rm -v $(pwd)/.env:/.env docker pull ghcr.io/dobbyvpn/dotline-server/cloak-server:v2 sh -c \
 "KEYPAIRS=\$(/app/ck-server -key)
 cat << EOF >> /.env
 CLOAK_PRIVATE_KEY=\$(echo \$KEYPAIRS | cut -d' ' -f13)
